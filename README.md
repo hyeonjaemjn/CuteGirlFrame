@@ -1,2622 +1,459 @@
---[[ Hub clean rebuild ]]
-pcall(function()
-	local pg = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-	if pg then
-		for _, n in ipairs({"HubRev", "HubRevBoot", "HubH", "HubV3"}) do
-			local o = pg:FindFirstChild(n)
-			if o then o:Destroy() end
-		end
-	end
-end)
-
-getgenv()._HUB_REV = true
-
 local Players = game:GetService("Players")
-local RS = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local LP = Players.LocalPlayer
-local Cam = Workspace.CurrentCamera
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local S = {
-	Aimbot = false,
-	AimSmooth = 0.3,
-	AimFOV = 300,
-	SilentAim = false,
-	Triggerbot = false,
-	TrigFOV = 120,
-	ShowFOV = false,
-	TargetPriority = "Closest", -- Closest | Crosshair | LowHP
-	Rage = false,
-	Wallbang = false,
-	Ragebot2 = false,
-	VoidSpam = false,
-	Desync = false,
-	AutoReload = false,
-	HitNotify = true,
-	AntiFlash = true,
-	AntiSmoke = true,
-	CustomCrosshair = false,
-	ShowSpectators = false,
-	ESP_Weapon = true,
-	ESP = false,
-	LevelSpoof = false,
-	Level = 9999,
-	WinStreakSpoof = false,
-	WinStreak = 9999,
-	DeviceSpoof = false,
-	DeviceName = "Console",
-	Noclip = false,
-	UnlockAll = false,
-	Fly = false,
-	FlySpeed = 60,
-	TeamCheck = true,
-	WallCheck = true,
-	RageInterval = 0.06,
-	RapidFire = false,
-	NoRecoil = false,
-	NoSpread = false,
-	WalkSpeed = false,
-	WalkSpeedValue = 45,
-	Freecam = false,
-	FreecamSpeed = 50,
-	ESP_Name = true,
-	ESP_HealthBar = true,
-	ESP_Distance = true,
-	ESP_Box = true,
-	ESP_Skeleton = true,
+if playerGui:FindFirstChild("CuteGirlHub") then playerGui.CuteGirlHub:Destroy() end
+
+--------------------------------------------------------------------------------
+-- 1. [대규모 한방 & 실존 명사 데이터베이스]
+--------------------------------------------------------------------------------
+local WordData = {
+	-- ㄱ
+	["가"] = {"가돌리늄", "가랒", "가랒풀", "가드늄", "가라앉음", "가람", "가라지", "가리키움", "가리비", "가시나무", "가시덤불", "가마솥", "가물치", "가오리", "가재", "가방", "가수", "가시", "가재도구", "가락국수", "가스레인지", "가을볕", "가면극", "가장자리", "가을", "가족", "가죽나무", "가읏", "가면", "가마", "가로수", "가구", "가뭄", "가죽", "가게", "가락", "가루", "가두리"},
+	["각"] = {"각녑", "각골난망", "각골명심", "각력암", "각목", "각설이", "각종", "각반", "각질", "각시탈", "각도기", "각설탕", "각막", "각단", "각배", "각시", "각지", "각선미", "각루", "각종"},
+	["간"] = {"간장", "간식", "간판", "간호사", "간격", "간수", "간장게장", "간이역", "간뇌", "간이침대", "간이점포", "간장종지", "간간히", "간장약", "간암", "간디", "간병인", "간질"},
+	["갈"] = {"갈륨", "갈륨염", "갈고리", "갈대", "갈증", "갈치", "갈매기", "갈고리손톱", "갈비", "갈색", "갈대밭", "갈매기살", "갈래길", "갈퀴", "갈매기조개", "갈증해소"},
+	["감"] = {"감륨", "감자", "감기", "감옥", "감동", "감귤", "감나무", "감상", "감식초", "감자전", "감자튀김", "감옥창살", "감나무골", "감염병", "감성", "감자칩", "감초", "감옥선"},
+	["갑"] = {"갑옷", "갑충", "갑판", "갑오징어", "갑부", "갑상선", "갑자기", "갑충류", "갑상샘호르몬", "갑문", "갑골문자", "갑골", "갑오년", "갑판장"},
+	["강"] = {"강아지", "강당", "강변", "강물", "강철", "강구", "강풍", "강력분", "강릉", "강아지풀", "강변살로", "강치", "강력계", "강의실", "강수량", "강변공원", "강당의자"},
+	["개"] = {"개구리", "개미", "개성", "개울", "개나리", "개미귀신", "개구멍", "개인", "개화", "개천", "개구리밥", "개양귀비", "개미굴", "개똥벌레", "개살구", "개미집", "개썰매"},
+	["거"] = {"거북이", "거미", "거울", "거실", "거머리", "거위", "거미줄", "거인", "거름", "거북선", "거머리풀", "거울방", "거머리창", "거위털", "거북알", "거대한거미"},
+	["건"] = {"건물", "건전지", "건설", "건강", "건어물", "건축", "건반", "건포도", "건설업", "건전지통", "건축물", "건어물상", "건전지함", "건조기", "건빵"},
+	["검"] = {"검사", "검은색", "검찰", "검도", "검은콩", "검역", "검문소", "검은띠", "검은머리물떼새", "검사관", "검은깨", "검은모래", "검은비닐"},
+	["게"] = {"게르마늄", "게르마늄샘", "게장", "게시판", "게살", "게이트볼", "게딱지", "게살볶음밥", "게스트하우스", "게장백반"},
+	["경"] = {"경찰", "경주", "경기", "경치", "경찰서", "경복궁", "경호원", "경운기", "경매", "경비원", "경주마", "경전철", "경찰차", "경영학", "경호원단"},
+	["계"] = {"계란", "계단", "계곡", "계산기", "계피", "계절", "계수나무", "계좌", "계약", "계란말이", "계란찜", "계산대", "계곡물", "계피차", "계란후라이"},
+	["고"] = {"고구마", "고양이", "고래", "고기", "고슴도치", "고등학교", "고추", "고무신", "고전", "고수", "고구라", "고드름", "고추장", "고등어", "고층빌딩", "고구마튀김"},
+	["공"] = {"공룡", "공원", "공장", "공책", "공간", "공중전화", "공작", "공놀이", "공예", "공동묘지", "공기밥", "공룡알", "공중화장실", "공구함", "공기청정기"},
+	["과"] = {"과자", "과일", "과학", "과즙", "과녁", "과꽃", "과정", "과자상자", "과일바구니", "과학자", "과일잼", "과즙음료"},
+	["관"] = {"관객", "관광", "관찰", "관람차", "관악기", "관자놀이", "관상", "관람객", "관할구역", "관광지", "관람권", "관악단"},
+	["광"] = {"광장", "광산", "광고", "광어", "광부", "광합성", "광속", "광개토대왕", "광안대교", "광선검", "광어회", "광고판"},
+	["교"] = {"교실", "교수", "교통", "교회", "교복", "교과서", "교량", "교풍", "교통카드", "교탁", "교장선생님", "교양과목", "교통신호"},
+	["구"] = {"구름", "구두", "구급차", "구슬", "구렁이", "구석기", "구관조", "구멍", "구룡포", "구두솔", "구급함", "구름다리", "구기자", "구슬치기"},
+	["국"] = {"국수", "국가", "국기", "국화", "국밥", "국민", "국회의원", "국경", "국립공원", "국수틀", "국립박물관", "국물", "국산차"},
+	["군"] = {"군인", "군대", "군함", "군고구마", "군사", "군수", "군자", "군화", "군함도", "군용기", "군만두", "군용트럭"},
+	["귀"] = {"귀걸이", "귀뚜라미", "귀신", "귀마개", "귀가", "귀퉁이", "귀지가개", "귀뚜라미소리", "귀여움", "귀고리", "귀향길"},
+	["규"] = {"규소", "규칙", "규범", "규산", "규모", "규산염", "규조토", "규소칼슘", "규격", "규화목"},
+	["금"] = {"금속", "금반지", "금고", "금붕어", "금요일", "금두꺼비", "금메달", "금강산", "금니", "금가루", "금줄", "금은방", "금줄기", "금빛"},
+	["기"] = {"기듕", "기뇰", "기픠", "기쁨", "기동돓", "기름", "기차", "기린", "기타", "기와집", "기읏", "기온", "기구", "기러기", "기초", "기상청", "기차표", "기름병", "기타줄"},
+	["길"] = {"길거리", "길가", "길잡이", "길통", "길모퉁이", "길치", "길냥이", "길따라", "길목", "길안내판"},
+	["김"] = {"김치", "김밥", "김 서림", "김발", "김치찌개", "김치냉장고", "김가루", "김밥말이", "김매기", "김부각", "김치통", "김영", "김장", "김이", "김판", "김치전"},
+	["꽃"] = {"꽃병", "꽃집", "꽃다발", "꽃밭", "꽃봉오리", "꽃샘추위", "꽃사슴", "꽃게", "꽃소금", "꽃사탕", "꽃가루", "꽃무늬"},
+
+	-- ㄴ
+	["나"] = {"나모쥭", "나모그릇", "나랗", "나트륨", "나프탈렌", "나비", "나무", "나침반", "나팔꽃", "나읏", "나룻배", "나물", "나비넥타이", "나이테", "나사못", "나트륨등", "나뭇잎", "나물무침"},
+	["낙"] = {"낙타", "낙엽", "낙하산", "낙지", "낙농업", "낙뢰", "낙지볶음", "낙엽송", "낙석", "낙하산병"},
+	["날"] = {"날씨", "날개", "날짜", "날고기", "날선", "날밑", "날라리", "날개뼈", "날개옷", "날씨예보", "날달걀"},
+	["남"] = {"남동생", "남자", "남극", "남대문", "남쪽", "남비", "남성", "남극곰", "남산타워", "남극탐험", "남대문시장", "남산보호구"},
+	["납"] = {"납치", "납부", "납자루", "납인", "납자", "납줄개", "납땜", "납축전지", "납인형", "납석"},
+	["너"] = {"너구리", "너울", "너와집", "너비", "너구리고기", "너도밤나무", "너울성파도", "너비아니"},
+	["네"] = {"네오프렌", "네오디뮴", "네오디뮴자석", "네트워크", "네잎클로버", "네온", "네임펜", "네온사인", "네티즌", "네비게이션"},
+	["노"] = {"노벨륨", "노트", "노래", "노을", "노루", "노랑색", "노트북", "노을빛", "노루발", "노래방", "노벨상", "노란우산", "노루귀"},
+	["녹"] = {"녹음", "녹차", "녹두", "녹색", "녹말", "녹유", "녹두전", "녹차라떼", "녹음기", "녹말가루", "녹차밭"},
+	["논"] = {"논리", "논문", "논두렁", "논밭", "논조", "논두렁밭두렁", "논리구조", "논밭길"},
+	["농"] = {"농구", "농장", "농구공", "농부", "농업", "농사", "농구화", "농약", "농구대", "농산물", "농기계"},
+	["눈"] = {"눈사람", "눈물", "눈썹", "눈길", "눈보라", "눈썹칼", "눈꽃", "눈싸움", "눈결정", "눈썰매", "눈구름"},
+	["뉴"] = {"뉴클레오티드", "뉴클레오시드", "뉴턴", "뉴스", "뉴런", "뉴질랜드", "뉴타운", "뉴욕", "뉴스룸"},
+
+	-- ㄷ
+	["다"] = {"다이크로뮴산칼륨", "다이디뮴", "다름슈타튬", "다람쥐", "다리", "다이아몬드", "다리미", "다락방", "다시마", "다이어리", "다목적강당", "다슬기", "다이아몬드반지", "다시마팩", "다리살"},
+	["단"] = {"단방시롭", "단무릎", "단풍", "단어", "단추", "단지", "단두대", "단소", "단비", "단풍나무", "단팥빵", "단백질", "단지무늬", "단풍잎"},
+	["달"] = {"달력", "달팽이", "달걀", "달맞이꽃", "달빛", "달리기", "달걀노른자", "달무지개", "달빛창가", "달콤함", "달팽이집"},
+	["닭"] = {"닭고기", "닭싸움", "닭장", "닭알", "닭갈비", "닭꼬치", "닭강정", "닭백숙", "닭털"},
+	["담"] = {"담벼락", "담요", "담배", "담쟁이", "담수", "담벼락밭", "담배꽁초", "담요포근", "담쟁이덩굴", "담뱃갑"},
+	["당"] = {"당근", "당구", "당나귀", "당의", "당구장", "당도", "당근케이크", "당구공", "당근즙", "당면"},
+	["대"] = {"대통령", "대학", "대나무", "대문", "대궐", "대구", "대접", "대나무숲", "대형마트", "대관령", "대문열쇠", "대교"},
+	["더"] = {"더블륨", "더비", "더덕", "더덕구이", "더위", "더위사냥", "더비구두"},
+	["도"] = {"도서관", "도로", "도장", "도시", "도마뱀", "도토리", "도자기", "도끼", "도토리묵", "도둑놈", "도서상품권", "도라지", "도토리나무"},
+	["독"] = {"독수리", "독서", "독일", "독개구리", "독사", "독버섯", "독서실", "독도", "독충", "독성물질"},
+	["돌"] = {"돌그릇", "돌담", "돌멩이", "돌고래", "돌탑", "돌나물", "돌할아버지", "돌다리", "돌산", "돌집"},
+	["동"] = {"동녘", "동물원", "동전", "동화책", "동굴", "동물", "동쪽", "동해", "동물병원", "동전지갑", "동파육", "동지팥죽"},
+	["두"] = {"두부", "두더지", "두루미", "두건", "두통", "두유", "두부김치", "두루두루", "두더지잡기", "두부조림"},
+	["등"] = {"등산", "등불", "등대", "등산화", "등받이", "등산로", "등갈비", "등대지기", "등등", "등잔"},
+	["디"] = {"디스프로슘", "디자인", "디스코", "디귿", "디지털", "디스켓", "디저트", "디지털시계", "디젤", "디저트카페"},
+
+	-- ㄹ
+	["라"] = {"라디오토륨", "라디오악티늄", "라듐", "라돈", "라디오", "라면", "라일락", "라이터", "라임", "라자냐", "라켓", "라디오파", "라임주스", "라면사리"},
+	["레"] = {"레늄", "레몬", "레이다", "레고", "레슬링", "레시피", "레몬즙", "레인코트", "레몬에이드", "레몬차", "레고블록"},
+	["로"] = {"로렌슘", "로봇", "로켓", "로션", "로비", "로터리", "로열제리", "로봇청소기", "로즈마리", "로션병"},
+	["루"] = {"루테늄", "루비튬", "루비", "루돌프", "루머", "루프탑", "루비반지", "루트", "루비원석"},
+	["리"] = {"리튬", "리튬이온", "리본", "리모컨", "리을", "리듬", "리액션", "리조또", "리틀", "리본끈", "리프트"},
+
+	-- ㅁ
+	["마"] = {"마그날륨", "마거릿", "마그네슘", "마그네슘합금", "마이트너륨", "마스크", "마술", "마늘", "마차", "마을", "마이크", "마늘쫑", "마구간", "마라탕", "마늘장아찌"},
+	["막"] = {"막걸리", "막대기", "막사", "막대사탕", "막장", "막대형", "막국수", "막차", "막장드라마"},
+	["만"] = {"만화", "만두", "만년필", "만화책", "만국기", "만두국", "만경창파", "만화카페", "만년설", "만두피"},
+	["망"] = {"망간", "망간전지", "망원경", "망치", "망고", "망망대해", "망개떡", "망사", "망고주스", "망망대해"},
+	["매"] = {"매직", "매듭", "매사냥", "매실", "매점", "매화", "매실청", "매운탕", "매직펜", "매화나무", "매듭실"},
+	["맥"] = {"맥주", "맥박", "맥아", "맥주병", "맥주잔", "맥락", "맥아당", "맥아즙", "맥주캔"},
+	["모"] = {"모리브데넘", "모스코븀", "모자", "모기", "모래", "모래시계", "모란", "모터", "모닥불", "모기장", "모빌", "모래사장", "모자장수"},
+	["목"] = {"목걸이", "목욕탕", "목목돓", "목수", "목사", "목마", "목목", "목장갑", "목베개", "목재", "목화"},
+	["무"] = {"무지개", "무용", "무늬", "무당벌레", "무궁화", "무게", "무생채", "무대", "무지개떡", "무순", "무전기"},
+	["문"] = {"문구점", "문학", "문어", "문살", "문방구", "문틀", "문어숙회", "문고리", "문학작품", "문패", "문서"},
+	["물"] = {"물개", "물고기", "물병", "물안경", "물레방아", "물감", "물줄기", "물보라", "물안개", "물통", "물초", "물약"},
+	["미"] = {"미시간륨", "미술", "미용실", "미역", "미음", "미미크리", "미로", "미소", "미역국", "미니버스", "미술관", "미꾸라지", "미생물"},
+
+	-- ㅂ
+	["바"] = {"바람곬", "바나듐", "바깥부엌", "바륨", "바륨염", "바다", "바나나", "바람", "바위", "비읍", "바구니", "바지", "바퀴", "바베큐", "바다표범", "바나나맛우유", "바윗돌"},
+	["박"] = {"박물관", "박수", "박바가지", "박쥐", "박하사탕", "박스", "박속", "박하향", "박하잎", "박제"},
+	["반"] = {"반지", "반찬", "반딧불이", "반달", "반죽", "반바지", "반찬통", "반짝이", "반도체", "반사경"},
+	["발"] = {"발레", "발자국", "발가락", "발전소", "발목", "발효", "발톱칼", "발레리나", "발판", "발찌"},
+	["방"] = {"방사능", "방귀", "방문", "방울", "방파제", "방패", "방울토마토", "방사선", "방울뱀", "방석", "방앗간"},
+	["배"] = {"배구", "배추", "배를", "배꼽", "배나무", "배드민턴", "배추김치", "배의", "배구공", "배즙", "배배"},
+	["백"] = {"백화점", "백조", "백과사전", "백일홍", "백설기", "백백", "백미", "백합화", "백기", "백골"},
+	["버"] = {"버클륨", "버스", "버섯", "버터", "버들가지", "버스정류장", "버터구이", "버섯전골", "버들강아지", "버스카드"},
+	["벌"] = {"벌꿀", "벌레", "벌집", "벌목", "벌구", "벌침", "벌꿀차", "벌집삼겹살"},
+	["법"] = {"법원", "법률", "법전", "법조인", "법학", "법원경매", "법복", "법의학"},
+	["벽"] = {"벽지", "벽시계", "벽난로", "벽돌", "벽화", "벽돌집", "벽장", "벽걸이"},
+	["변"] = {"변호사", "변기", "변압기", "변화", "변수", "변호사 사무실", "변기통"},
+	["병"] = {"병원", "병아리", "병마개", "병풍", "병원균", "병실", "병아리모자", "병맥주", "병입구"},
+	["보"] = {"보륨", "보석", "보건소", "보름달", "보드카", "보리", "보조배터리", "보라색", "보석함", "보리밥", "보리차"},
+	["복"] = {"복숭아", "복도", "복주머니", "복권", "복사기", "복분자", "복숭아통조림", "복어", "복어회"},
+	["봉"] = {"봉투", "봉화", "봉선화", "봉우리", "봉지", "봉뇌", "봉투칼", "봉숭아", "봉인"},
+	["부"] = {"부채", "부동산", "부엉이", "부엌", "부적", "부침개", "부추", "부채춤", "부대찌개", "부엌칼"},
+	["북"] = {"북녘", "북한", "북극", "북극곰", "북소리", "북어국", "북극여우", "북극성", "북채"},
+	["분"] = {"분홍색", "분수", "분필", "분리수거", "분화구", "분자", "분필가루", "분수대", "분홍신"},
+	["불"] = {"불꽃", "불고기", "불암산", "불빛", "불상", "불꽃놀이", "불고기버거", "불도저", "불가사리"},
+	["비"] = {"비스무트", "비누", "비행기", "비둘기", "비읍", "비밀번호", "비빔밥", "비닐", "비닐하우스", "비누방울", "비상구", "비옷"},
+
+	-- ㅅ
+	["사"] = {"사기그릇", "사마륨", "사마륨염", "사그릇", "사염화금나트륨", "사과", "사자", "사탕", "사슴", "시옷", "사막", "사다리", "사이다", "사과나무", "사슴벌레", "사과잼"},
+	["산"] = {"산타", "산양", "산기슭", "산호", "산토끼", "산사나무", "산들바람", "산호초", "산새", "산적"},
+	["상"] = {"상자", "상어", "상점", "상추", "상어지느러미", "상장", "상수리나무", "상상력", "상가", "상복"},
+	["새"] = {"새벽녘", "새싹", "새우", "새장", "새매", "새우튀김", "새싹채소", "새총", "새장안"},
+	["색"] = {"색연필", "색종이", "색소폰", "색채", "색동저고리", "색연필세트", "색유리"},
+	["생"] = {"생선", "생일", "생강", "생명체", "생맥주", "생강차", "생선구이", "생일케이크", "생화"},
+	["서"] = {"서녘", "서깥", "서글픔", "서륨", "서점", "서류", "서랍", "서쪽", "서예", "서류봉투", "서랍장", "서해"},
+	["석"] = {"석탄", "석류", "석상", "석유", "석빙고", "석양", "석류즙", "석회암", "석판"},
+	["선"] = {"선곬", "선풍기", "선생님", "선물", "선인장", "선박", "선선", "선물상자", "선선한바람", "선장"},
+	["설"] = {"설탕", "설날", "설산", "설렘", "설렁탕", "설탕시럽", "설인", "설탕과자"},
+	["성"] = {"성곽", "성당", "성냥", "성주", "성벽", "성냥갑", "성냥개비", "성문", "성인"},
+	["세"] = {"세슘", "세슘염", "세륨", "세탁기", "세포", "세면대", "세제", "세면도구", "세탁소"},
+	["소"] = {"소듐", "소방차", "소금", "소나무", "소라", "소화기", "소고기", "소시지", "소금쟁이", "소파", "소몰이"},
+	["손"] = {"손수건", "손톱", "손전등", "손목시계", "손수레", "손톱깎이", "손난로", "손잡이", "손가락"},
+	["수"] = {"수소", "수소폭탄", "수박", "수영장", "수건", "수족관", "수첩", "수제비", "수세미", "수도꼭지", "수정"},
+	["스"] = {"스트론튬", "스칸듐", "스프", "스마트폰", "스키장", "스탬프", "스테이크", "스피커", "스케이트", "스펀지"},
+	["시"] = {"시늉", "시냏", "시보귬", "시계", "시민", "시장", "시옷", "시골", "시금치", "시계탑", "시금치나물", "시내", "시사회"},
+	["신"] = {"신발", "신문", "신호등", "신부", "신발장", "신라면", "신문지", "신전", "신발끈"},
+	["실"] = {"실내화", "실타래", "실험실", "실팽이", "실장님", "실질적", "실뭉치", "실풍선"},
+
+	-- ㅇ
+	["아"] = {"아구녁", "아깃", "아드레노크로뮴", "아르곤", "아르곤가스", "아스타틴", "아인슈타이늄", "아기", "아이스크림", "이응", "아프리카", "아파트", "아지랑이", "아메리카노", "아구찜", "아침"},
+	["악"] = {"악티늄", "악티늄염", "악기", "악어", "악보", "악당", "악세사리", "악어가죽", "악마"},
+	["안"] = {"안티모니", "안개", "안경", "안전모", "안테나", "안락의자", "안경집", "안개꽃", "안대", "안마기"},
+	["암"] = {"암모늄", "암모늄염", "암석", "암호", "암사자", "암기", "암벽", "암사슴", "암탉"},
+	["양"] = {"양말", "양파", "양초", "양배추", "양녕", "양념치킨", "양상추", "양양", "양고기", "양산"},
+	["어"] = {"어린이", "어부", "어항", "어깨", "어둠", "어묵", "어린이집", "어류", "어시장"},
+	["언"] = {"언덕", "언어", "언론", "언약", "언강", "언덕길", "언론사"},
+	["엄"] = {"엄지값", "엄마", "엄지", "엄나무", "엄지손가락", "엄마표", "엄나무순", "엄지발가락"},
+	["얼"] = {"얼음", "얼굴", "얼룩말", "얼음과자", "얼갈이", "얼음물", "얼음조각", "얼음주머니"},
+	["에"] = {"에르븀", "에르븀염", "에어컨", "에레베이터", "에메랄드", "에너지", "에스프레소", "에어팟", "에스키모"},
+	["여"] = {"여우", "여권", "여름", "여학생", "여인숙", "여의도", "여름휴가", "여관", "여우털"},
+	["역"] = {"역모션", "역사", "역전", "역도", "역기", "역대급", "역사박물관", "역무원", "역세권"},
+	["연"] = {"연필", "연못", "연꽃", "연날리기", "연속", "연필깎이", "연꽃씨", "연어", "연기"},
+	["열"] = {"열쇠", "열차", "열매", "열기구", "열풍", "열쇠고리", "열매채소", "열전도", "열풍기"},
+	["염"] = {"염소", "염전", "염색약", "염산", "염통", "염화나트륨", "염소고기", "염분"},
+	["영"] = {"영화관", "영수증", "영웅", "영양제", "영업시간", "영화표", "영양소", "영토"},
+	["예"] = {"예술", "예약", "예고편", "예식장", "예금", "예술가", "예절", "예금통장"},
+	["오"] = {"오가네손", "오스뮴", "오스뮴염", "오징어", "오리", "오솔길", "오디", "오징어볶음", "오리알", "오븐"},
+	["옥"] = {"옥수수", "옥상", "옥반지", "옥쇄", "옥수수차", "옥수수수염차", "옥도", "옥도통"},
+	["온"] = {"온도계", "온천", "온실", "온풍기", "온수", "온천수", "온도", "온수매트"},
+	["옷"] = {"옷장", "옷걸이", "옷감", "옷핀", "옷솔", "옷보관함", "옷가게", "옷단"},
+	["왕"] = {"왕관", "왕자", "왕궁", "왕개미", "왕눈이", "왕자님", "왕비", "왕거미"},
+	["요"] = {"요오드", "요오드화칼륨", "요리사", "요트", "요술봉", "요구르트", "요람", "요가매트"},
+	["용"] = {"용돈", "용기", "용구", "용암", "용수철", "용궁", "용돈박스", "용머리", "용의눈"},
+	["우"] = {"우라늄", "우라늄광", "우산", "우체국", "우주선", "우유", "우물", "우체통", "우비", "우유병"},
+	["원"] = {"원숭이", "원피스", "원자력", "원탁", "원두", "원자력발전소", "원형", "원시인"},
+	["위"] = {"위성", "위생", "위험지역", "위성안테나", "위스키", "위생장갑", "위벽", "위성사진"},
+	["유"] = {"유로퓸", "유로퓸염", "유치원", "유리", "유성", "유자차", "유리병", "유충", "유리창"},
+	["이"] = {"이리듐", "이리듐염", "이붖", "이녁", "이테르븀", "이트륨", "이빨", "이야기", "이응", "이불", "이발소", "이모티콘", "이발사"},
+	["인"] = {"인듐", "인듐염", "인형", "인도", "인어공주", "인쇄기", "인감도장", "인증서", "인삼"},
+	["일"] = {"일기", "일출", "일요일", "일식", "일기예보", "일회용품", "일출봉", "일몰", "일력"},
+	["입"] = {"입술", "입구", "입체파", "입장권", "입구문", "입술연지", "입영통지서", "입구표지판"},
+
+	-- ㅈ
+	["자"] = {"자리낏", "자동뷰렛", "자개그릇", "지르코늄", "자전거", "자동차", "자석", "지읒", "자두", "자라", "자장면", "자석판", "자두나무", "자물쇠"},
+	["장"] = {"장난감", "장미", "장갑", "장화", "장군", "장작", "장조림", "장미꽃", "장작불", "장독대"},
+	["전"] = {"전화기", "전구", "전철", "전망대", "전신주", "전자레인지", "전기밥솥", "전동킥보드", "전등"},
+	["정"] = {"정원", "정류장", "정글", "정수기", "정문", "정장", "정원수", "정동진", "정자"},
+	["제"] = {"제과점", "제주도", "제비", "제모제", "제비꽃", "제설차", "제주감귤", "제과류", "제비집"},
+	["조"] = {"조개", "조명", "조류", "조각상", "조롱박", "조개구이", "조류독감", "조개껍데기", "조각케이크"},
+	["주"] = {"주스", "주차장", "주머니", "주사기", "주전자", "주말", "주류상", "주택", "주황색"},
+	["쥐"] = {"쥐덫", "쥐약", "쥐구멍", "쥐톳", "쥐이빨", "쥐덫틀", "쥐꼬리", "쥐풀"},
+	["지"] = {"지르코늄", "지르코늄염", "지우개", "지하철", "지도", "지읒", "지구", "지붕", "지갑", "지하도", "지렁이"},
+	["집"] = {"집게", "집웅", "집비둘기", "집안", "집돼지", "집게사장", "집열판", "집주인"},
+
+	-- ㅊ ~ ㅎ
+	["차"] = {"차이쨔", "차죵", "차풰", "차량", "차창", "차표", "치읓", "차밭", "차스푼", "차돌박이", "차표통", "차량용선풍기"},
+	["창"] = {"창문", "창고", "창공", "창문틀", "창살", "창창", "창고건물", "창문유리", "창창함"},
+	["천"] = {"천장", "천문대", "천사", "천막", "천천", "천체망원경", "천연염료", "천둥", "천안문"},
+	["초"] = {"초촛불", "초등학교", "초록색", "초상화", "초가지붕", "초콜릿", "초촛불대", "초초", "초승달"},
+	["총"] = {"총알", "총기", "총통", "총선", "총잡이", "총알택시", "총집", "총구"},
+	["축"] = {"축구", "축제", "축구공", "축사", "축구화", "축구장", "축구선수", "축하화환"},
+	["치"] = {"치읓", "치마긶", "치렁", "치약", "치마", "치과", "치즈", "치킨", "치솔", "치과의사", "치즈케이크"},
+	["카"] = {"카밤산암모늄", "카르밤산암모늄", "카드뮴", "카드뮴염", "캘리포늄", "칼륨", "칼슘", "카메라", "키읔", "카누", "카레", "카페라떼", "카펫", "카라멜"},
+	["타"] = {"타래무늬그릇", "타이타늄", "탈륨", "탈륨염", "타이어", "타월", "타조", "티엿", "타악기", "타이머", "타코야끼", "타월지"},
+	["코"] = {"코발트", "코발트염", "코뿔소", "코끼리", "코코넛", "코코아", "코르크", "코르크마개", "코트", "코골이"},
+	["크"] = {"크립톤", "크립톤가스", "크롬", "크레파스", "크리스마스", "크림", "크루아상", "크림빵", "크로플"},
+	["테"] = {"테크네튬", "테네신", "테르븀", "테르븀염", "텔루륨", "테니스", "테이블", "테이프", "테니스채", "테이블보"},
+	["파"] = {"프로메튬", "프로메튬염", "프로락틴", "파도", "파이프", "파인애플", "피읖", "파란색", "파파야", "파전", "파리", "파자마"},
+	["플"] = {"플루토늄", "플루토늄염", "플루오린", "플라스틱", "플루트", "플러그", "플래카드", "플라스틱컵"},
+	["하"] = {"하프늄", "하프늄염", "하슘", "하늘", "하마", "하모니카", "히읗", "하구", "하얀색", "하수구", "하품"},
+	["학"] = {"학교", "학용품", "학학소리", "학자", "학학", "학원", "학교강당", "학용품세트"},
+	["한"] = {"한복", "한의원", "한옥", "한글", "한라산", "한옥마을", "한복남", "한지", "한방차"},
+	["해"] = {"해질녘", "해바라기", "해수욕장", "해파리", "해돋이", "해녀", "해물파전", "해바라기밭", "해수", "해초"},
+	["호"] = {"홀뮴", "홀뮴염", "호랑이", "호수", "호두", "호루라기", "호박", "호두과자", "호박전", "호주"},
+	["화"] = {"화장실", "화분", "화요일", "화산", "화살", "화분받침", "화장대", "화로", "화물차"}
 }
-_G.HUB = S
 
-local function notify(t)
-	pcall(function()
-		game:GetService("StarterGui"):SetCore("SendNotification", {
-			Title = "Hub", Text = tostring(t), Duration = 2
-		})
-	end)
-end
-
--- Device spoof (Lunara: SetControls remote)
-local DEVICE_CFGS = {
-	Mobile = { Code = "Touch" },
-	Console = { Code = "Gamepad" },
-	VR = { Code = "VR" },
-	PC = { Code = "MouseKeyboard" },
-	Computer = { Code = "MouseKeyboard" },
+-- 방어 불가 한방 마감 글자 정밀 필터
+local HanbangEndings = {
+	["륨"]=true, ["뮴"]=true, ["늄"]=true, ["듐"]=true, ["녘"]=true,
+	["튬"]=true, ["슘"]=true, ["큼"]=true, ["즘"]=true, ["븀"]=true, 
+	["틔"]=true, ["약"]=true, ["손"]=true, ["돈"]=true, ["트"]=true,
+	["론"]=true, ["톤"]=true, ["턴"]=true, ["닌"]=true, ["랸"]=true,
+	["롄"]=true, ["븨"]=true, ["늣"]=true, ["돓"]=true, ["녑"]=true,
+	["눋"]=true, ["귬"]=true, ["븜"]=true, ["큠"]=true, ["쥭"]=true,
+	["랗"]=true, ["곬"]=true, ["엌"]=true, ["릇"]=true, ["깆"]=true,
+	["낏"]=true, ["쨔"]=true, ["풰"]=true, ["긶"]=true, ["붖"]=true,
+	["냏"]=true, ["듕"]=true, ["뇰"]=true, ["픠"]=true, ["값"]=true,
+	["읓"]=true, ["랒"]=true, ["픔"]=true, ["롭"]=true, ["릎"]=true,
+	["션"]=true, ["릿"]=true, ["죵"]=true, ["렁"]=true, ["읖"]=true,
+	["읒"]=true, ["읏"]=true, ["읗"]=true, ["읔"]=true, ["귿"]=true,
+	["을"]=true, ["음"]=true, ["읍"]=true, ["옷"]=true, ["응"]=true,
+	["엿"]=true, ["댱"]=true, ["댸"]=true, ["릐"]=true, ["톳"]=true,
+	["끠"]=true, ["뙈"]=true, ["뙤"]=true, ["뚬"]=true, ["뛔"]=true,
+	["뜀"]=true, ["랎"]=true, ["럗"]=true, ["럾"]=true, ["렏"]=true
 }
-local lastDeviceApply = 0
-local function getSetControlsRemote()
-	local remotes = RS:FindFirstChild("Remotes")
-	remotes = remotes and remotes:FindFirstChild("Replication")
-	remotes = remotes and remotes:FindFirstChild("Fighter")
-	return remotes and remotes:FindFirstChild("SetControls")
+
+-- 두음법칙 자동 전환
+local function applyDooum(char)
+	local convertTable = {
+		["녀"] = "여", ["뇨"] = "요", ["뉴"] = "유", ["니"] = "이",
+		["라"] = "나", ["래"] = "내", ["로"] = "노", ["루"] = "누", ["리"] = "이",
+		["락"] = "낙", ["란"] = "난", ["람"] = "남", ["랑"] = "낭", ["렬"] = "열",
+		["렴"] = "염", ["렵"] = "엽", ["령"] = "영", ["록"] = "녹", ["론"] = "논"
+	}
+	return convertTable[char] or char
 end
 
-local function fireControls(code)
-	local sc = getSetControlsRemote()
-	if not sc then return false end
-	local ok = pcall(function()
-		sc:FireServer(code)
-	end)
-	return ok
+local function getLastCharacter(text)
+	text = text:gsub("%s+", "")
+	if #text == 0 then return "" end
+	local lastChar = ""
+	for _, code in utf8.codes(text) do
+		lastChar = utf8.char(code)
+	end
+	return lastChar
 end
 
-local function realDeviceCode()
-	local it = UIS:GetLastInputType()
-	if it == Enum.UserInputType.Touch then
-		return "Touch"
-	elseif it == Enum.UserInputType.Gamepad1 or it == Enum.UserInputType.Gamepad2 then
-		return "Gamepad"
-	elseif it == Enum.UserInputType.Focus then -- unlikely
-		return "MouseKeyboard"
-	else
-		-- mobile executors often still report mouse; prefer Touch if TouchEnabled
-		if UIS.TouchEnabled and not UIS.KeyboardEnabled then
-			return "Touch"
-		end
-		return "MouseKeyboard"
-	end
-end
+--------------------------------------------------------------------------------
+-- 2. [UI 디자인]
+--------------------------------------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Name = "CuteGirlHub"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
 
-function applyDeviceSpoof(force)
-	-- ONLY when enabled
-	if not S.DeviceSpoof then
-		return
-	end
-	local now = tick()
-	if not force and now - lastDeviceApply < 0.5 then
-		return
-	end
-	lastDeviceApply = now
-	local cfg = DEVICE_CFGS[S.DeviceName]
-	if not cfg then return end
-	for _ = 1, 3 do
-		if fireControls(cfg.Code) then
-			break
-		end
-		task.wait(0.2)
-	end
-end
+local SideContainer = Instance.new("Frame", gui)
+SideContainer.Size = UDim2.new(0, 95, 0, 60)
+SideContainer.Position = UDim2.new(0.02, 0, 0.40, 0)
+SideContainer.BackgroundTransparency = 1
+SideContainer.Active = true
+SideContainer.Draggable = true
 
-function restoreRealDevice()
-	-- call when spoof disabled so server gets real controls back
-	local code = realDeviceCode()
-	fireControls(code)
-	print("[hub] device restored:", code)
-end
+local ToggleBtn = Instance.new("TextButton", SideContainer)
+ToggleBtn.Size = UDim2.new(1, 0, 0, 30)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Text = "Toggle Ui"
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 14
 
-task.spawn(function()
-	task.wait(2)
-	if S.DeviceSpoof then applyDeviceSpoof(true) end
-	while true do
-		task.wait(10)
-		if S.DeviceSpoof then applyDeviceSpoof(false) end
-	end
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Color3.fromRGB(0, 102, 255)
+ToggleStroke.Thickness = 2.5
+
+local CuteGirlFrame = Instance.new("Frame", SideContainer)
+CuteGirlFrame.Size = UDim2.new(1, 0, 0, 26)
+CuteGirlFrame.Position = UDim2.new(0, 0, 0, 31)
+CuteGirlFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+
+local CuteGirlStroke = Instance.new("UIStroke", CuteGirlFrame)
+CuteGirlStroke.Color = Color3.fromRGB(0, 102, 255)
+CuteGirlStroke.Thickness = 2.5
+
+local CuteGirlText = Instance.new("TextLabel", CuteGirlFrame)
+CuteGirlText.Size = UDim2.new(1, 0, 1, 0)
+CuteGirlText.BackgroundTransparency = 1
+CuteGirlText.TextColor3 = Color3.fromRGB(255, 255, 255)
+CuteGirlText.Text = "cute_girl"
+CuteGirlText.Font = Enum.Font.SourceSansBold
+CuteGirlText.TextSize = 13
+
+local MainFrame = Instance.new("Frame", gui)
+MainFrame.Size = UDim2.new(0, 270, 0, 330)
+MainFrame.Position = UDim2.new(0.35, 0, 0.25, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(0, 102, 255)
+MainStroke.Thickness = 2.5
+
+ToggleBtn.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
 end)
 
-LP.CharacterAdded:Connect(function()
-	task.wait(1)
-	if S.DeviceSpoof then
-		task.wait(0.5)
-		applyDeviceSpoof(true)
-	end
-end)
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 28)
+Title.BackgroundColor3 = Color3.fromRGB(25, 20, 30)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Text = "🌸 큐트걸 허브 | cute_girl 🌸"
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 13
 
--- Lunara Unlock All (exact remote they use)
-local unlockAllExecuted = false
-function runLunaraUnlockAll()
-	if unlockAllExecuted then
-		notify("Unlock All already on")
-		return
-	end
-	unlockAllExecuted = true
-	task.spawn(function()
-		local ok, err = pcall(function()
-			-- same source as Lunara hub Misc > Unlock All
-			loadstring(game:HttpGet("https://pastefy.app/6ElsMLeb/raw", true))()
-		end)
-		if ok then
-			notify("Lunara Unlock All on")
-			print("[hub] Lunara Unlock All loaded")
-		else
-			unlockAllExecuted = false
-			S.UnlockAll = false
-			warn("[hub] Unlock All fail:", err)
-			notify("Unlock All fail")
-		end
-	end)
-end
+local SearchInput = Instance.new("TextBox", MainFrame)
+SearchInput.Size = UDim2.new(0.9, 0, 0, 30)
+SearchInput.Position = UDim2.new(0.05, 0, 0.11, 0)
+SearchInput.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+SearchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchInput.PlaceholderText = "글자 입력 (게임 화면 감지 중)"
+SearchInput.Text = ""
+SearchInput.Font = Enum.Font.SourceSansBold
+SearchInput.TextSize = 13
 
--- ========== AC (Lunara full) ==========
--- setmetatable kv trap (MiscellaneousController)
-pcall(function()
-	local _stbl
-	_stbl = hookfunction(getrenv().setmetatable, newcclosure(function(tbl, mt)
-		if mt and typeof(mt) == "table" and rawget(mt, "__mode") == "kv" then
-			local tr = debug.traceback()
-			if tr:find("MiscellaneousController") or tr:find("LocalScript3") then
-				return _stbl({1, 2, 3}, {})
-			end
-		end
-		return _stbl(tbl, mt)
-	end))
-end)
+local InputStroke = Instance.new("UIStroke", SearchInput)
+InputStroke.Color = Color3.fromRGB(0, 102, 255)
 
--- disable anticheat-named scripts + network client junk
-task.spawn(function()
-	pcall(function()
-		local tags = {"anticheat", "ac", "detection", "ban", "kick", "security", "moderation"}
-		local function proc(o)
-			pcall(function()
-				if o:IsA("LocalScript") or o:IsA("ModuleScript") then
-					local ok, nm = pcall(function() return string.lower(o.Name) end)
-					if not ok or not nm then return end
-					for i = 1, #tags do
-						if string.find(nm, tags[i], 1, true) then
-							pcall(function() o.Disabled = true end)
-							break
-						end
-					end
-				end
-			end)
-		end
-		pcall(function()
-			local desc = game:GetDescendants()
-			for i = 1, #desc do
-				if i % 400 == 0 then task.wait() end
-				proc(desc[i])
-			end
-		end)
-		pcall(function()
-			game.DescendantAdded:Connect(proc)
-		end)
-	end)
-	pcall(function()
-		local nc = game:GetService("NetworkClient")
-		if not nc then return end
-		nc.ChildAdded:Connect(function(ch)
-			pcall(function()
-				local ok, n = pcall(function() return string.lower(ch.Name) end)
-				if ok and n then
-					if string.find(n, "anticheat") or string.find(n, "detection") then
-						pcall(function() ch:Destroy() end)
-					end
-				end
-			end)
-		end)
-	end)
-end)
+local ScrollFrame = Instance.new("ScrollingFrame", MainFrame)
+ScrollFrame.Size = UDim2.new(0.9, 0, 0, 230)
+ScrollFrame.Position = UDim2.new(0.05, 0, 0.24, 0)
+ScrollFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollFrame.ScrollBarThickness = 4
 
--- ClientAlert fake + kick block
-pcall(function()
-	local fake = Instance.new("RemoteEvent")
-	fake.Name = "ClientAlert"
-	fake.Parent = LP
+local UIList = Instance.new("UIListLayout", ScrollFrame)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 5)
 
-	local pmt = getrawmetatable(LP)
-	if pmt then
-		local oldnc = pmt.__namecall
-		setreadonly(pmt, false)
-		pmt.__namecall = newcclosure(function(self, ...)
-			if getnamecallmethod() == "WaitForChild" and select(1, ...) == "ClientAlert" then
-				return fake
-			end
-			return oldnc(self, ...)
-		end)
-		setreadonly(pmt, true)
-	end
-
-	local mt = getrawmetatable(game)
-	if mt then
-		local old = mt.__namecall
-		setreadonly(mt, false)
-		mt.__namecall = newcclosure(function(self, ...)
-			local m = getnamecallmethod()
-			if self == LP and (m == "Kick" or m == "kick") then
-				return
-			end
-			if type(m) == "string" then
-				local ml = string.lower(m)
-				if string.find(ml, "kick") or m == "Shutdown" then
-					return
-				end
-			end
-			if m == "FireServer" and self == fake then
-				return
-			end
-			return old(self, ...)
-		end)
-		setreadonly(mt, true)
-	end
-	print("bypass started")
-end)
-
--- neuter LocalScript3 / LoadingScreen ban functions (Lunara getgc)
-task.spawn(function()
-	task.wait(0.5)
-	pcall(function()
-		local rf = game:GetService("ReplicatedFirst")
-		local tgt = rf:FindFirstChild("LocalScript3") or rf:WaitForChild("LocalScript3", 10)
-		local ct = 0
-		local gc = getgc(false)
-		for i = 1, #gc do
-			if i % 300 == 0 then task.wait() end
-			local fn = gc[i]
-			if type(fn) == "function" then
-				local ok1, env = pcall(getfenv, fn)
-				if ok1 and type(env) == "table" then
-					local ok2, scr = pcall(function()
-						return rawget(env, "script")
-					end)
-					if ok2 and scr and typeof(scr) == "Instance" then
-						local ok3, ss = pcall(tostring, scr)
-						if ok3 and (scr == tgt or (type(ss) == "string" and string.find(ss, "LoadingScreen"))) then
-							local ok4, consts = pcall(debug.getconstants, fn)
-							if ok4 and type(consts) == "table" then
-								for j = 1, #consts do
-									local c = consts[j]
-									if type(c) == "string" and (string.find(c, "TakeTheL") or string.find(c, "ban") or string.find(c, "kick")) then
-										pcall(function()
-											hookfunction(fn, function() end)
-											ct = ct + 1
-										end)
-										break
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-		print("[hub] AC neutered:", ct)
-	end)
-end)
-
--- ========== UI FIRST (always) ==========
-local function makeToggle(parent, text, get, set)
-	local row = Instance.new("TextButton")
-	row.Size = UDim2.new(1, -8, 0, 28)
-	row.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
-	row.Text = ""
-	row.AutoButtonColor = true
-	row.Parent = parent
-	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -50, 1, 0)
-	label.Position = UDim2.new(0, 8, 0, 0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.TextColor3 = Color3.fromRGB(220, 220, 230)
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = row
-
-	local state = Instance.new("TextLabel")
-	state.Size = UDim2.new(0, 40, 1, 0)
-	state.Position = UDim2.new(1, -44, 0, 0)
-	state.BackgroundTransparency = 1
-	state.Font = Enum.Font.GothamBold
-	state.TextSize = 12
-	state.Parent = row
-
-	local function refresh()
-		local on = get()
-		state.Text = on and "ON" or "OFF"
-		state.TextColor3 = on and Color3.fromRGB(80, 255, 140) or Color3.fromRGB(120, 120, 130)
-	end
-	refresh()
-	row.MouseButton1Click:Connect(function()
-		set(not get())
-		refresh()
-	end)
-	return refresh
-end
-
-local function makeInput(parent, text, get, set, minV, maxV)
-	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, -8, 0, 28)
-	row.BackgroundTransparency = 1
-	row.Parent = parent
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0.45, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.TextColor3 = Color3.fromRGB(160, 160, 170)
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 12
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = row
-
-	local box = Instance.new("TextBox")
-	box.Size = UDim2.new(0.5, 0, 1, 0)
-	box.Position = UDim2.new(0.48, 0, 0, 0)
-	box.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
-	box.Text = tostring(get())
-	box.TextColor3 = Color3.new(1, 1, 1)
-	box.Font = Enum.Font.GothamBold
-	box.TextSize = 12
-	box.ClearTextOnFocus = false
-	box.Parent = row
-	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-	box.FocusLost:Connect(function()
-		local v = tonumber(box.Text)
-		if v then
-			v = math.clamp(math.floor(v), minV, maxV)
-			set(v)
-			box.Text = tostring(v)
-		else
-			box.Text = tostring(get())
-		end
-	end)
-end
-
-local function section(parent, title)
-	local f = Instance.new("Frame")
-	f.Size = UDim2.new(1, 0, 0, 0)
-	f.AutomaticSize = Enum.AutomaticSize.Y
-	f.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-	f.Parent = parent
-	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 5)
-	local st = Instance.new("UIStroke")
-	st.Color = Color3.fromRGB(45, 45, 55)
-	st.Parent = f
-
-	local h = Instance.new("TextLabel")
-	h.Size = UDim2.new(1, 0, 0, 22)
-	h.BackgroundTransparency = 1
-	h.Text = "  " .. title
-	h.TextColor3 = Color3.fromRGB(180, 180, 200)
-	h.Font = Enum.Font.GothamBold
-	h.TextSize = 12
-	h.TextXAlignment = Enum.TextXAlignment.Left
-	h.Parent = f
-
-	local body = Instance.new("Frame")
-	body.Size = UDim2.new(1, -6, 0, 0)
-	body.Position = UDim2.new(0, 3, 0, 22)
-	body.AutomaticSize = Enum.AutomaticSize.Y
-	body.BackgroundTransparency = 1
-	body.Parent = f
-	local lay = Instance.new("UIListLayout")
-	lay.Padding = UDim.new(0, 4)
-	lay.Parent = body
-	local pad = Instance.new("UIPadding")
-	pad.PaddingBottom = UDim.new(0, 6)
-	pad.Parent = f
-	return body
-end
-
-local function buildUI()
-	local pg = LP:WaitForChild("PlayerGui", 15)
-	if not pg then
-		warn("[hub] no PlayerGui")
-		return
-	end
-	for _, n in ipairs({"HubRev", "HubRevBoot"}) do
-		local o = pg:FindFirstChild(n)
-		if o then o:Destroy() end
-	end
-
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "HubRev"
-	sg.ResetOnSpawn = false
-	sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	sg.DisplayOrder = 999
-	sg.Parent = pg
-
-	-- Toggle button (draggable)
-	local toggle = Instance.new("TextButton")
-	toggle.Name = "ToggleBtn"
-	toggle.Size = UDim2.new(0, 100, 0, 32)
-	toggle.Position = UDim2.new(0, 12, 0, 60)
-	toggle.BackgroundTransparency = 0
-	toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	toggle.Text = "Toggle UI"
-	toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	toggle.Font = Enum.Font.Code
-	toggle.TextSize = 13
-	toggle.TextStrokeTransparency = 1
-	toggle.BorderSizePixel = 1
-	toggle.BorderColor3 = Color3.fromRGB(140, 100, 255)
-	toggle.ZIndex = 10
-	toggle.Parent = sg
-	Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 0)
-
-	local dragging, d0, p0 = false, nil, nil
-	toggle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			d0 = input.Position
-			p0 = toggle.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-	UIS.InputChanged:Connect(function(input)
-		if not dragging then return end
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			local d = input.Position - d0
-			toggle.Position = UDim2.new(p0.X.Scale, p0.X.Offset + d.X, p0.Y.Scale, p0.Y.Offset + d.Y)
-		end
-	end)
-
-	-- Main panel
-	local main = Instance.new("Frame")
-	main.Name = "Main"
-	main.Size = UDim2.new(0, 580, 0, 400)
-	main.Position = UDim2.new(0.5, -290, 0.5, -200)
-	main.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-	main.Active = true
-	main.Draggable = true
-	main.Visible = true
-	main.ZIndex = 5
-	main.Parent = sg
-	Instance.new("UICorner", main).CornerRadius = UDim.new(0, 0)
-	local ms = Instance.new("UIStroke")
-	ms.Color = Color3.fromRGB(140, 100, 255)
-	ms.Thickness = 1.5
-	ms.Transparency = 0.35
-	ms.Parent = main
-
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, 0, 0, 32)
-	title.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-	title.Text = "  CuteGirl Hub"
-	title.TextColor3 = Color3.fromRGB(255, 255, 255)
-	title.Font = Enum.Font.Code
-	title.TextSize = 14
-	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Parent = main
-	Instance.new("UICorner", title).CornerRadius = UDim.new(0, 0)
-
-	-- Tabs
-	local tabBar = Instance.new("Frame")
-	tabBar.Size = UDim2.new(1, -12, 0, 28)
-	tabBar.Position = UDim2.new(0, 6, 0, 32)
-	tabBar.BackgroundTransparency = 1
-	tabBar.Parent = main
-	local tLay = Instance.new("UIListLayout")
-	tLay.FillDirection = Enum.FillDirection.Horizontal
-	tLay.Padding = UDim.new(0, 4)
-	tLay.Parent = tabBar
-
-	local pages = {}
-	local tabNames = {"Combat", "Character", "Visuals", "Misc"}
-
-	for _, name in ipairs(tabNames) do
-		local page = Instance.new("Frame")
-		page.Name = name
-		page.Size = UDim2.new(1, -12, 1, -68)
-		page.Position = UDim2.new(0, 6, 0, 64)
-		page.BackgroundTransparency = 1
-		page.Visible = false
-		page.Parent = main
-
-		local left = Instance.new("ScrollingFrame")
-		left.Name = "Left"
-		left.Size = UDim2.new(0.5, -4, 1, 0)
-		left.BackgroundTransparency = 1
-		left.BorderSizePixel = 0
-		left.ScrollBarThickness = 3
-		left.CanvasSize = UDim2.new(0, 0, 0, 0)
-		left.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		left.Parent = page
-		Instance.new("UIListLayout", left).Padding = UDim.new(0, 6)
-
-		local right = left:Clone()
-		right.Name = "Right"
-		right.Position = UDim2.new(0.5, 4, 0, 0)
-		right.Parent = page
-
-		pages[name] = page
-	end
-
-	local function showTab(name)
-		for n, page in pairs(pages) do
-			page.Visible = (n == name)
-		end
-		for _, child in ipairs(tabBar:GetChildren()) do
-			if child:IsA("TextButton") then
-				child.BackgroundColor3 = (child.Name == name)
-					and Color3.fromRGB(50, 40, 75)
-					or Color3.fromRGB(18, 18, 24)
-				if child.Name == name then
-					child.TextColor3 = Color3.fromRGB(255, 255, 255)
-				else
-					child.TextColor3 = Color3.fromRGB(160, 160, 160)
-				end
-			end
-		end
-	end
-
-	for _, name in ipairs(tabNames) do
-		local btn = Instance.new("TextButton")
-		btn.Name = name
-		btn.Size = UDim2.new(0, 88, 1, 0)
-		btn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-		btn.Text = name
-		btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-		btn.Font = Enum.Font.Code
-		btn.TextSize = 12
-		btn.BorderSizePixel = 0
-		btn.Parent = tabBar
-		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 0)
-		btn.MouseButton1Click:Connect(function()
-			showTab(name)
-		end)
-	end
-
-	-- Combat
-	local cL, cR = pages.Combat.Left, pages.Combat.Right
-	local aimBody = section(cL, "Aimbot")
-	makeToggle(aimBody, "Enable (head lock)", function() return S.Aimbot end, function(v) S.Aimbot = v end)
-	makeToggle(aimBody, "Silent Aim", function() return S.SilentAim end, function(v) S.SilentAim = v end)
-	makeToggle(aimBody, "Team Check", function() return S.TeamCheck end, function(v) S.TeamCheck = v end)
-	makeToggle(aimBody, "Wall Check", function() return S.WallCheck end, function(v) S.WallCheck = v end)
-	makeInput(aimBody, "Aim FOV", function() return S.AimFOV end, function(v) S.AimFOV = v end, 50, 800)
-	makeToggle(aimBody, "Show FOV", function() return S.ShowFOV end, function(v) S.ShowFOV = v end)
-	local trigBody = section(cL, "Triggerbot")
-	makeToggle(trigBody, "Enable (auto on target)", function() return S.Triggerbot end, function(v) S.Triggerbot = v end)
-	makeInput(trigBody, "Trig FOV", function() return S.TrigFOV end, function(v) S.TrigFOV = v end, 20, 400)
-	local gunBody = section(cL, "Gun Mods")
-	makeToggle(gunBody, "Rapid Fire", function() return S.RapidFire end, function(v) S.RapidFire = v end)
-	makeToggle(gunBody, "No Recoil (no kick)", function() return S.NoRecoil end, function(v) S.NoRecoil = v end)
-	makeToggle(gunBody, "No Spread (laser)", function() return S.NoSpread end, function(v) S.NoSpread = v end)
-	makeToggle(gunBody, "Auto Reload", function() return S.AutoReload end, function(v) S.AutoReload = v end)
-	local rageBody = section(cR, "Ragebot")
-	makeToggle(rageBody, "Enable", function() return S.Rage end, function(v) S.Rage = v end)
-	makeToggle(rageBody, "Wallbang (guns)", function() return S.Wallbang end, function(v) S.Wallbang = v end)
-	makeToggle(rageBody, "Ragebot 2 (sling/bow/dagger)", function() return S.Ragebot2 end, function(v) S.Ragebot2 = v end)
-	makeToggle(rageBody, "Desync", function() return S.Desync end, function(v) S.Desync = v end)
-	local voidBody = section(cR, "Void Spam")
-	makeToggle(voidBody, "Far Void (safe TP)", function() return S.VoidSpam end, function(v) S.VoidSpam = v end)
-	local priBody = section(cR, "Target")
-	-- cycle priority button
-	local priBtn = Instance.new("TextButton")
-	priBtn.Size = UDim2.new(1, -8, 0, 28)
-	priBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-	priBtn.Text = "Priority: " .. tostring(S.TargetPriority)
-	priBtn.TextColor3 = Color3.fromRGB(210, 210, 210)
-	priBtn.Font = Enum.Font.Code
-	priBtn.TextSize = 12
-	priBtn.Parent = priBody
-	Instance.new("UICorner", priBtn).CornerRadius = UDim.new(0, 0)
-	local priList = {"Closest", "Crosshair", "LowHP"}
-	priBtn.MouseButton1Click:Connect(function()
-		local idx = 1
-		for j = 1, #priList do
-			if priList[j] == S.TargetPriority then idx = j break end
-		end
-		idx = idx % #priList + 1
-		S.TargetPriority = priList[idx]
-		priBtn.Text = "Priority: " .. S.TargetPriority
-	end)
-
-	-- Character
-	local chL, chR = pages.Character.Left, pages.Character.Right
-	local prof = section(chL, "Profile")
-	makeToggle(prof, "Level Spoof", function() return S.LevelSpoof end, function(v) S.LevelSpoof = v end)
-	makeInput(prof, "Level", function() return S.Level end, function(v) S.Level = v end, 1, 99999)
-	makeToggle(prof, "Win Streak", function() return S.WinStreakSpoof end, function(v) S.WinStreakSpoof = v end)
-	makeInput(prof, "Streak", function() return S.WinStreak end, function(v) S.WinStreak = v end, 0, 99999)
-	local mov = section(chR, "Movement")
-	makeToggle(mov, "Fly", function() return S.Fly end, function(v)
-		S.Fly = v
-		if not v then
-			pcall(function()
-				local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-				if hum then hum.PlatformStand = false end
-				local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local bv = hrp:FindFirstChild("HubFly")
-					if bv then bv:Destroy() end
-				end
-			end)
-		end
-	end)
-	makeInput(mov, "Fly speed", function() return S.FlySpeed end, function(v) S.FlySpeed = v end, 10, 200)
-	makeToggle(mov, "Noclip", function() return S.Noclip end, function(v) S.Noclip = v end)
-	makeToggle(mov, "Walk Speed (Velocity)", function() return S.WalkSpeed end, function(v) S.WalkSpeed = v end)
-	makeInput(mov, "Speed value", function() return S.WalkSpeedValue end, function(v) S.WalkSpeedValue = v end, 1, 200)
-	makeToggle(mov, "Freecam", function() return S.Freecam end, function(v)
-		S.Freecam = v
-		if not v then pcall(stopFreecam) end
-		if v then pcall(startFreecam) end
-	end)
-	makeInput(mov, "Freecam speed", function() return S.FreecamSpeed end, function(v) S.FreecamSpeed = v end, 10, 200)
+--------------------------------------------------------------------------------
+-- 3. [단어 검증 및 UI 업데이트]
+--------------------------------------------------------------------------------
+local function createHeader(titleText, color, order)
+	local header = Instance.new("TextLabel", ScrollFrame)
+	header.Size = UDim2.new(1, 0, 0, 22)
+	header.BackgroundColor3 = Color3.fromRGB(25, 20, 30)
+	header.TextColor3 = color
+	header.Text = "  " .. titleText
+	header.Font = Enum.Font.SourceSansBold
+	header.TextSize = 12
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.LayoutOrder = order
 	
-	-- Visuals
-	local vis = section(pages.Visuals.Left, "ESP")
-	makeToggle(vis, "Enable", function() return S.ESP end, function(v) S.ESP = v end)
-	makeToggle(vis, "Name", function() return S.ESP_Name end, function(v) S.ESP_Name = v end)
-	makeToggle(vis, "Health Bar", function() return S.ESP_HealthBar end, function(v) S.ESP_HealthBar = v end)
-	makeToggle(vis, "Distance", function() return S.ESP_Distance end, function(v) S.ESP_Distance = v end)
-	makeToggle(vis, "Box", function() return S.ESP_Box end, function(v) S.ESP_Box = v end)
-	makeToggle(vis, "Skeleton", function() return S.ESP_Skeleton end, function(v) S.ESP_Skeleton = v end)
-	makeToggle(vis, "Weapon/Ammo", function() return S.ESP_Weapon end, function(v) S.ESP_Weapon = v end)
-
-	-- Misc
-	local dev = section(pages.Misc.Left, "Device Spoof")
-	makeToggle(dev, "Enable", function() return S.DeviceSpoof end, function(v)
-		S.DeviceSpoof = v
-		if v then
-			applyDeviceSpoof(true)
-			notify("Device ON: " .. tostring(S.DeviceName))
-		else
-			pcall(restoreRealDevice)
-			notify("Device OFF (restored)")
-		end
-	end)
-
-	local curDev = Instance.new("TextLabel")
-	curDev.Name = "CurDev"
-	curDev.Size = UDim2.new(1, -8, 0, 20)
-	curDev.BackgroundTransparency = 1
-	curDev.Text = "  Now: " .. tostring(S.DeviceName)
-	curDev.TextColor3 = Color3.fromRGB(190, 190, 210)
-	curDev.Font = Enum.Font.GothamBold
-	curDev.TextSize = 12
-	curDev.TextXAlignment = Enum.TextXAlignment.Left
-	curDev.Parent = dev
-
-	-- Lunara codes: Touch / Gamepad / VR / MouseKeyboard
-	local devices = {
-		{"PC", "PC"},
-		{"Console", "Console"},
-		{"Mobile", "Mobile"},
-		{"VR", "VR"},
-	}
-	for _, pair in ipairs(devices) do
-		local label, value = pair[1], pair[2]
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(1, -8, 0, 26)
-		b.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-		b.Text = label
-		b.TextColor3 = Color3.fromRGB(210, 210, 210)
-		b.Font = Enum.Font.Code
-		b.TextSize = 12
-		b.BorderSizePixel = 0
-		b.Parent = dev
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 0)
-		b.MouseButton1Click:Connect(function()
-			S.DeviceName = value
-			curDev.Text = "  Now: " .. value
-			if S.DeviceSpoof then
-				applyDeviceSpoof(true)
-				notify("Device: " .. value)
-			else
-				notify("Device set: " .. value .. " (Enable OFF)")
-			end
-		end)
-	end
-
-	local unlockBody = section(pages.Misc.Right, "Unlock")
-	makeToggle(unlockBody, "Unlock All (Lunara)", function() return S.UnlockAll end, function(v)
-		S.UnlockAll = v
-		if v then
-			runLunaraUnlockAll()
-		end
-	end)
-	local extraBody = section(pages.Misc.Right, "Extra")
-	makeToggle(extraBody, "Hit Notify", function() return S.HitNotify end, function(v) S.HitNotify = v end)
-	makeToggle(extraBody, "Anti Flash", function() return S.AntiFlash end, function(v) S.AntiFlash = v end)
-	makeToggle(extraBody, "Anti Smoke", function() return S.AntiSmoke end, function(v) S.AntiSmoke = v end)
-	makeToggle(extraBody, "Custom Crosshair", function() return S.CustomCrosshair end, function(v) S.CustomCrosshair = v end)
-	makeToggle(extraBody, "Show Spectators", function() return S.ShowSpectators end, function(v) S.ShowSpectators = v end)
-	local hopBtn = Instance.new("TextButton")
-	hopBtn.Size = UDim2.new(1, -8, 0, 28)
-	hopBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 55)
-	hopBtn.Text = "Server Hop"
-	hopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	hopBtn.Font = Enum.Font.Code
-	hopBtn.TextSize = 12
-	hopBtn.Parent = extraBody
-	Instance.new("UICorner", hopBtn).CornerRadius = UDim.new(0, 4)
-	hopBtn.MouseButton1Click:Connect(function()
-		pcall(function() if doServerHop then doServerHop() end end)
-	end)
-	local rejBtn = Instance.new("TextButton")
-	rejBtn.Size = UDim2.new(1, -8, 0, 28)
-	rejBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 55)
-	rejBtn.Text = "Rejoin"
-	rejBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	rejBtn.Font = Enum.Font.Code
-	rejBtn.TextSize = 12
-	rejBtn.Parent = extraBody
-	Instance.new("UICorner", rejBtn).CornerRadius = UDim.new(0, 4)
-	rejBtn.MouseButton1Click:Connect(function()
-		pcall(function()
-			game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LP)
-		end)
-	end)
-	local cfgBody = section(pages.Misc.Right, "Config")
-	local nameBox = Instance.new("TextBox")
-	nameBox.Size = UDim2.new(1, -8, 0, 28)
-	nameBox.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-	nameBox.Text = "default"
-	nameBox.PlaceholderText = "config name"
-	nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameBox.Font = Enum.Font.Code
-	nameBox.TextSize = 12
-	nameBox.ClearTextOnFocus = false
-	nameBox.Parent = cfgBody
-	nameBox.BorderSizePixel = 1
-	nameBox.BorderColor3 = Color3.fromRGB(55, 55, 70)
-
-	local selectedLbl = Instance.new("TextLabel")
-	selectedLbl.Size = UDim2.new(1, -8, 0, 18)
-	selectedLbl.BackgroundTransparency = 1
-	selectedLbl.Text = "Selected: default"
-	selectedLbl.TextColor3 = Color3.fromRGB(160, 160, 180)
-	selectedLbl.Font = Enum.Font.Code
-	selectedLbl.TextSize = 11
-	selectedLbl.TextXAlignment = Enum.TextXAlignment.Left
-	selectedLbl.Parent = cfgBody
-
-	-- selectable config list
-	local listFrame = Instance.new("ScrollingFrame")
-	listFrame.Name = "CfgList"
-	listFrame.Size = UDim2.new(1, -8, 0, 110)
-	listFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
-	listFrame.BorderSizePixel = 1
-	listFrame.BorderColor3 = Color3.fromRGB(50, 50, 65)
-	listFrame.ScrollBarThickness = 4
-	listFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-	pcall(function() listFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
-	listFrame.Parent = cfgBody
-	local listLay = Instance.new("UIListLayout")
-	listLay.Padding = UDim.new(0, 3)
-	listLay.Parent = listFrame
-	local listPad = Instance.new("UIPadding")
-	listPad.PaddingTop = UDim.new(0, 4)
-	listPad.PaddingBottom = UDim.new(0, 4)
-	listPad.PaddingLeft = UDim.new(0, 4)
-	listPad.PaddingRight = UDim.new(0, 4)
-	listPad.Parent = listFrame
-
-	local function setSelected(n)
-		nameBox.Text = n
-		selectedLbl.Text = "Selected: " .. n
-	end
-
-	local function refreshCfgList()
-		for _, c in ipairs(listFrame:GetChildren()) do
-			if c:IsA("TextButton") then c:Destroy() end
-		end
-		local names = {}
-		pcall(function()
-			if not listfiles then return end
-			if makefolder then pcall(makefolder, CFG_FOLDER) end
-			local files = listfiles(CFG_FOLDER) or {}
-			for _, f in ipairs(files) do
-				local n = tostring(f):match("([^/\\]+)%.json$")
-				if n then table.insert(names, n) end
-			end
-		end)
-		table.sort(names)
-		if #names == 0 then
-			local empty = Instance.new("TextLabel")
-			empty.Size = UDim2.new(1, -4, 0, 22)
-			empty.BackgroundTransparency = 1
-			empty.Text = "(no configs yet)"
-			empty.TextColor3 = Color3.fromRGB(100, 100, 110)
-			empty.Font = Enum.Font.Code
-			empty.TextSize = 11
-			empty.Parent = listFrame
-		else
-			for _, n in ipairs(names) do
-				local row = Instance.new("TextButton")
-				row.Size = UDim2.new(1, -4, 0, 24)
-				row.BackgroundColor3 = (nameBox.Text == n) and Color3.fromRGB(50, 40, 75) or Color3.fromRGB(22, 22, 28)
-				row.Text = "  " .. n
-				row.TextColor3 = Color3.fromRGB(220, 220, 230)
-				row.Font = Enum.Font.Code
-				row.TextSize = 12
-				row.TextXAlignment = Enum.TextXAlignment.Left
-				row.Parent = listFrame
-				row.MouseButton1Click:Connect(function()
-					setSelected(n)
-					for _, o in ipairs(listFrame:GetChildren()) do
-						if o:IsA("TextButton") then
-							o.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-						end
-					end
-					row.BackgroundColor3 = Color3.fromRGB(50, 40, 75)
-				end)
-				row.MouseButton2Click:Connect(function()
-					-- right click = select + load
-					setSelected(n)
-					loadConfig(n)
-				end)
-			end
-		end
-	end
-	-- expose for after save
-	getgenv()._HUB_REFRESH_CFG = refreshCfgList
-
-	local function cfgBtn(text, fn)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(1, -8, 0, 26)
-		b.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-		b.Text = text
-		b.TextColor3 = Color3.fromRGB(210, 210, 210)
-		b.Font = Enum.Font.Code
-		b.TextSize = 12
-		b.Parent = cfgBody
-		b.MouseButton1Click:Connect(function()
-			fn(nameBox.Text)
-		end)
-		return b
-	end
-	cfgBtn("Create / Save", function(n)
-		saveConfig(n)
-		task.defer(refreshCfgList)
-	end)
-	cfgBtn("Load selected", function(n)
-		loadConfig(n)
-	end)
-	cfgBtn("Refresh list", function()
-		refreshCfgList()
-		notify("Config list refreshed")
-	end)
-	cfgBtn("Delete selected", function(n)
-		n = tostring(n or ""):gsub("[^%w_%-]", "")
-		if n == "" then return end
-		pcall(function()
-			local path = CFG_FOLDER .. "/" .. n .. ".json"
-			if delfile and isfile and isfile(path) then
-				delfile(path)
-				notify("Deleted: " .. n)
-			elseif writefile then
-				-- fallback overwrite empty then list refresh
-				notify("delfile N/A")
-			end
-		end)
-		task.defer(refreshCfgList)
-	end)
-	task.defer(refreshCfgList)
-
-	local note = section(pages.Misc.Right, "Info")
-	local info = Instance.new("TextLabel")
-	info.Size = UDim2.new(1, -8, 0, 40)
-	info.BackgroundTransparency = 1
-	info.Text = "AC always on\nVoid = Combat toggle\nFly = Lunara"
-	info.TextColor3 = Color3.fromRGB(140, 140, 150)
-	info.Font = Enum.Font.Gotham
-	info.TextSize = 11
-	info.TextXAlignment = Enum.TextXAlignment.Left
-	info.Parent = note
-
-	showTab("Combat")
-
-	local open = true
-	toggle.MouseButton1Click:Connect(function()
-		-- ignore if was dragging far
-		open = not open
-		main.Visible = open
-	end)
-
-	UIS.InputBegan:Connect(function(input, gp)
-		if gp then return end
-		if input.KeyCode == Enum.KeyCode.RightShift then
-			open = not open
-			main.Visible = open
-		end
-	end)
-
-	print("[hub] UI created")
-	notify("UI ready")
-end
-
--- Build UI immediately
-local uiOk, uiErr = pcall(buildUI)
-if not uiOk then
-	warn("[hub] UI FAIL:", uiErr)
-	notify("UI FAIL: " .. tostring(uiErr))
-end
-
--- ========== Modules ==========
-local function sreq(inst)
-	if not inst then return nil end
-	local ok, m = pcall(require, inst)
-	if ok then return m end
-	return nil
-end
-
-local Utility, EnumLibrary, FC, GunModule, UseItem
-
-local function refreshMods()
-	local mod = RS:FindFirstChild("Modules")
-	Utility = Utility or sreq(mod and mod:FindFirstChild("Utility"))
-	EnumLibrary = EnumLibrary or sreq(mod and mod:FindFirstChild("EnumLibrary"))
-	local ps = LP:FindFirstChild("PlayerScripts")
-	local ctr = ps and ps:FindFirstChild("Controllers")
-	FC = FC or sreq(ctr and ctr:FindFirstChild("FighterController"))
-	local it = ps and ps:FindFirstChild("Modules")
-	it = it and it:FindFirstChild("ItemTypes")
-	GunModule = GunModule or sreq(it and it:FindFirstChild("Gun"))
-	local r = RS:FindFirstChild("Remotes")
-	r = r and r:FindFirstChild("Replication")
-	r = r and r:FindFirstChild("Fighter")
-	UseItem = UseItem or (r and r:FindFirstChild("UseItem"))
-end
-refreshMods()
-task.spawn(function()
-	for _ = 1, 20 do
-		task.wait(0.5)
-		refreshMods()
-		if Utility and EnumLibrary and UseItem then break end
-	end
-	print("[hub] mods U", Utility ~= nil, "E", EnumLibrary ~= nil, "FC", FC ~= nil, "G", GunModule ~= nil, "UI", UseItem ~= nil)
-end)
-
-local controls
-pcall(function()
-	controls = require(LP.PlayerScripts:WaitForChild("PlayerModule", 5)):GetControls()
-end)
-
-local function getFighter()
-	refreshMods()
-	if not FC then return nil end
-	if FC.LocalFighter then return FC.LocalFighter end
-	if type(FC.GetFighter) == "function" then
-		local ok, f = pcall(FC.GetFighter, FC, LP)
-		if ok then return f end
-	end
-	return nil
-end
-
-local function getRootPart()
-	local lf = getFighter()
-	if lf and lf.Entity and lf.Entity.RootPart then
-		return lf.Entity.RootPart
-	end
-	return LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-end
-
-local function getMoveWorld()
-	local cf = Cam.CFrame
-	local look = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
-	local right = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z)
-	if look.Magnitude > 0 then look = look.Unit end
-	if right.Magnitude > 0 then right = right.Unit end
-
-	if controls and controls.GetMoveVector then
-		local ok, mv = pcall(function() return controls:GetMoveVector() end)
-		if ok and typeof(mv) == "Vector3" and mv.Magnitude > 0.05 then
-			local dir = right * mv.X + look * mv.Z
-			if dir.Magnitude > 0.05 then return dir.Unit end
-		end
-	end
-
-	local m = Vector3.zero
-	if UIS:IsKeyDown(Enum.KeyCode.W) then m = m + look end
-	if UIS:IsKeyDown(Enum.KeyCode.S) then m = m - look end
-	if UIS:IsKeyDown(Enum.KeyCode.A) then m = m - right end
-	if UIS:IsKeyDown(Enum.KeyCode.D) then m = m + right end
-	if m.Magnitude > 0 then return m.Unit end
-
-	local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-	if hum and hum.MoveDirection.Magnitude > 0.05 then
-		local md = hum.MoveDirection
-		local flat = Vector3.new(md.X, 0, md.Z)
-		if flat.Magnitude > 0 then return flat.Unit end
-	end
-	return Vector3.zero
-end
-
-local function validEnemy(plr)
-	if plr == LP then return false end
-	local char = plr.Character
-	if not char then return false end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hum or not hrp or hum.Health <= 0 then return false end
-	if hrp:FindFirstChild("Attachment") then return false end
-	if S.TeamCheck then
-		local a, b = LP:GetAttribute("TeamID"), plr:GetAttribute("TeamID")
-		if a and b and a == b then return false end
-	end
-	return true
-end
-
-
-local function hasLOS(fromPos, toPos, targetChar)
-	if not S.WallCheck then return true end
-	local origin = fromPos
-	local dir = toPos - origin
-	local dist = dir.Magnitude
-	if dist < 1 then return true end
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	local filter = { LP.Character }
-	if targetChar then table.insert(filter, targetChar) end
-	params.FilterDescendantsInstances = filter
-	params.IgnoreWater = true
-	local result = Workspace:Raycast(origin, dir.Unit * dist, params)
-	if not result then return true end
-	-- hit something that is not the target
-	return false
-end
-
-local function getHead(plr)
-	local c = plr.Character
-	if not c then return nil end
-	return c:FindFirstChild("HitboxHead") or c:FindFirstChild("Head")
-end
-
-local function getNearest(ignoreWall)
-	local root = getRootPart()
-	if not root then return nil end
-	local best, bd = nil, math.huge
-	local from = root.Position
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if validEnemy(plr) then
-			local head = getHead(plr)
-			local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-			if head and hrp then
-				local okWall = ignoreWall or hasLOS(from, head.Position, plr.Character)
-				if okWall then
-					local d = (from - hrp.Position).Magnitude
-					if d < bd then
-						bd = d
-						best = head
-					end
-				end
-			end
-		end
-	end
-	return best
-end
-
-local function getCrosshair(fov)
-	local best, bd = nil, fov or 120
-	local center = Cam.ViewportSize / 2
-	local root = getRootPart()
-	local from = root and root.Position or Cam.CFrame.Position
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if validEnemy(plr) then
-			local head = getHead(plr)
-			if head then
-				local sp, on = Cam:WorldToViewportPoint(head.Position)
-				if on and sp.Z > 0 then
-					local dist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
-					if dist < bd and hasLOS(from, head.Position, plr.Character) then
-						bd = dist
-						best = head
-					end
-				end
-			end
-		end
-	end
-	return best
-end
-
-
-local function getTarget(ignoreWall, fov)
-	local mode = S.TargetPriority or "Closest"
-	if mode == "Crosshair" then
-		return getCrosshair(fov or S.AimFOV or 300) or getNearest(ignoreWall)
-	elseif mode == "LowHP" then
-		local root = getRootPart()
-		if not root then return nil end
-		local best, bestHp = nil, math.huge
-		local from = root.Position
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if validEnemy(plr) then
-				local head = getHead(plr)
-				local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-				if head and hum then
-					local okWall = ignoreWall or hasLOS(from, head.Position, plr.Character)
-					if okWall and hum.Health < bestHp then
-						bestHp = hum.Health
-						best = head
-					end
-				end
-			end
-		end
-		return best
-	end
-	return getNearest(ignoreWall)
-end
-
-local function encodeShot(from, to, head)
-	if not Utility then return nil end
-	local e = Utility:EncodeCFrame(CFrame.new(from, to))
-	return {
-		[utf8.char(1)] = {
-			[utf8.char(0)] = e,
-			[utf8.char(1)] = e,
-			[utf8.char(2)] = head,
-			[utf8.char(3)] = Utility:EncodeCFrame(CFrame.new(0.43, 0.25, 0.42)),
-		},
-	}
-end
-
--- ========== RAGE / VOID (stable, don't touch when editing UI) ==========
-local csync = { active = false, realCF = nil, serverPos = nil }
-
--- Visual NEVER stays at server shot pos. RenderStep always restores client CF.
-pcall(function()
-	RunService:BindToRenderStep("hub_csync", Enum.RenderPriority.Camera.Value - 1, function()
-		if not csync.realCF then return end
-		local root = getRootPart()
-		if not root then return end
-		-- always keep what you see at realCF while rage/csync running
-		if csync.active or S.Rage then
-			pcall(function()
-				root.CFrame = csync.realCF
-			end)
-		end
-	end)
-end)
-
-local function csyncCaptureVisual()
-	local root = getRootPart()
-	if root then
-		csync.realCF = root.CFrame
-	end
-end
-
-local function csyncBegin(pos)
-	local root = getRootPart()
-	if not root then return end
-	-- capture current visual BEFORE any snap (do not overwrite with under-target)
-	if not csync.realCF then
-		csync.realCF = root.CFrame
-	end
-	csync.serverPos = pos
-	csync.active = true
-	-- brief server-side snap only (visual restored same frame by RenderStep)
-	pcall(function()
-		root.CFrame = CFrame.new(pos)
-		root.AssemblyLinearVelocity = Vector3.zero
-	end)
-end
-
-local function csyncEnd()
-	local root = getRootPart()
-	if root and csync.realCF then
-		pcall(function()
-			root.CFrame = csync.realCF
-			root.AssemblyLinearVelocity = Vector3.zero
-		end)
-	end
-	csync.active = false
-	csync.serverPos = nil
-	-- keep realCF while Rage on so next shot still has visual anchor
-	if not S.Rage then
-		csync.realCF = nil
-	end
-end
-
-local function rageFire(head)
-	if not head then return false end
-	refreshMods()
-	if not (Utility and EnumLibrary and UseItem) then return false end
-
-	local lf = getFighter()
-	if not lf or not lf.EquippedItem then return false end
-
-	local ok, oid = pcall(function()
-		return lf.EquippedItem:Get("ObjectID")
-	end)
-	local okE, se = pcall(function()
-		return EnumLibrary:ToEnum("StartShooting")
-	end)
-	if not (ok and oid and okE and se) then return false end
-
-	local pos = head.Position
-	local root = getRootPart()
-	local from = root and root.Position or Cam.CFrame.Position
-
-	-- under-target for SERVER shot only — screen stays put
-	csyncCaptureVisual()
-	local under = pos + Vector3.new(0, -5, 0)
-	csyncBegin(under)
-	from = under
-
-	local data = encodeShot(from, pos, head)
-	if not data then
-		csyncEnd()
-		return false
-	end
-
-	local fired = false
-	for _ = 1, 2 do
-		local okF = pcall(function()
-			UseItem:FireServer(oid, se, data, nil)
-		end)
-		if okF then fired = true end
-	end
-
-	task.delay(0.05, function()
-		csyncEnd()
-	end)
-	return fired
-end
-
--- Silent aim / trigger redirect on real shots
-task.spawn(function()
-	for _ = 1, 15 do
-		refreshMods()
-		if GunModule and GunModule.StartShooting then break end
-		task.wait(0.4)
-	end
-	if not (GunModule and GunModule.StartShooting) then
-		warn("[hub] gun hook failed")
-		return
-	end
-	local old = GunModule.StartShooting
-	GunModule.StartShooting = function(self, ...)
-		local a, b, c, d, e = old(self, ...)
-		if not S.Rage and not S.Triggerbot and not S.SilentAim then
-			return a, b, c, d, e
-		end
-		local isLocal = false
-		pcall(function()
-			local cf = self.ClientFighter
-			if cf then
-				if cf.IsLocalPlayer then
-					isLocal = true
-				elseif cf.Player == LP then
-					isLocal = true
-				end
-			end
-		end)
-		if not isLocal or type(c) ~= "table" then
-			return a, b, c, d, e
-		end
-		local head
-		if S.Rage then
-			head = getNearest(true)
-		elseif S.SilentAim then
-			head = getTarget(false, S.AimFOV or 300)
-		else
-			head = getCrosshair(S.TrigFOV or 120)
-		end
-		if head and Utility then
-			local pos = head.Position
-			local root = getRootPart()
-			local from = root and root.Position or Cam.CFrame.Position
-			if S.Rage then
-				from = pos + Vector3.new(0, -5, 0)
-			end
-			pcall(function()
-				local data = encodeShot(from, pos, head)
-				if data then
-					c[utf8.char(1)] = data[utf8.char(1)]
-					c[utf8.char(0)] = data[utf8.char(1)][utf8.char(0)]
-					c[utf8.char(2)] = head
-				end
-			end)
-			d = true
-		end
-		return a, b, c, d, e
-	end
-	print("[hub] gun hooked")
-end)
-
--- Aimbot: hard lock onto enemy HEAD (team + wall check kept)
-pcall(function()
-	RunService:UnbindFromRenderStep("hub_aimbot")
-end)
-RunService:BindToRenderStep("hub_aimbot", Enum.RenderPriority.Camera.Value + 1, function()
-	if not S.Aimbot then return end
-	-- wall/team via getCrosshair / getNearest (hasLOS + validEnemy)
-	local head = getTarget(false, S.AimFOV or 300)
-	if not head or not head.Parent then return end
-	-- prefer actual Head / HitboxHead part
-	local target = head
-	local char = head.Parent
-	if char then
-		local h = char:FindFirstChild("HitboxHead") or char:FindFirstChild("Head")
-		if h then target = h end
-	end
-	local cam = Workspace.CurrentCamera
-	if not cam then return end
-	-- exact snap (no lerp) — crosshair on head
-	cam.CFrame = CFrame.lookAt(cam.CFrame.Position, target.Position)
-end)
-
-
--- Silent Aim (Lunara: UseItem while shoot held, no camera move)
-local lastSilent = 0
-RunService.Heartbeat:Connect(function()
-	if not S.SilentAim then return end
-	if S.Rage then return end
-	local holding = false
-	pcall(function()
-		holding = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-			or UIS:IsKeyDown(Enum.KeyCode.ButtonR2)
-	end)
-	if not holding then return end
-	if tick() - lastSilent < 0.05 then return end
-	local head = getTarget(false, S.AimFOV or 300)
-	if not head then return end
-	local char = head.Parent
-	if char then
-		local h = char:FindFirstChild("HitboxHead") or char:FindFirstChild("Head")
-		if h then head = h end
-	end
-	refreshMods()
-	if not (Utility and EnumLibrary and UseItem) then return end
-	local lf = getFighter()
-	if not lf or not lf.EquippedItem then return end
-	local ok, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
-	local okE, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
-	if not (ok and oid and okE and se) then return end
-	local root = getRootPart()
-	local from = root and root.Position or Cam.CFrame.Position
-	local data = encodeShot(from, head.Position, head)
-	if data then
-		pcall(function() UseItem:FireServer(oid, se, data, nil) end)
-		lastSilent = tick()
-	end
-end)
-
--- Triggerbot: shoot when target near crosshair
-local lastTrig = 0
-RunService.Heartbeat:Connect(function()
-	if not S.Triggerbot or S.Rage then return end
-	if tick() - lastTrig < 0.1 then return end
-	local lf = getFighter()
-	if not lf or not lf.EquippedItem then return end
-	local head = getCrosshair(math.max(S.TrigFOV or 120, 80))
-	if not head then return end
-	refreshMods()
-	if not (Utility and EnumLibrary and UseItem) then return end
-	local ok, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
-	local okE, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
-	if not (ok and oid and okE and se) then return end
-	local root = getRootPart()
-	local from = root and root.Position or Cam.CFrame.Position
-	local data = encodeShot(from, head.Position, head)
-	if data then
-		pcall(function() UseItem:FireServer(oid, se, data, nil) end)
-		lastTrig = tick()
-	end
-end)
-
--- Ragebot loop
-local lastRage = 0
-RunService.Heartbeat:Connect(function()
-	if not S.Rage then
-		if csync.active then csyncEnd() end
-		csync.realCF = nil
-		return
-	end
-	-- refresh visual anchor when not mid-shot
-	if not csync.active then
-		csyncCaptureVisual()
-	end
-	if tick() - lastRage < (S.RageInterval or 0.06) then return end
-	local lf = getFighter()
-	if not lf or not lf.EquippedItem then return end
-	local head = getNearest(true) -- rage: no wall check
-	if not head then return end
-	if rageFire(head) then
-		lastRage = tick()
-	end
-end)
-
-
-
--- Void Spam: continuous far safe teleport (not onto enemy)
-local farVoidConn = nil
-local farVoidSaved = nil
-local function stopFarVoid()
-	if farVoidConn then
-		farVoidConn:Disconnect()
-		farVoidConn = nil
-	end
-	local root = getRootPart()
-	if root and farVoidSaved then
-		pcall(function()
-			root.CFrame = farVoidSaved
-			root.AssemblyLinearVelocity = Vector3.zero
-		end)
-	end
-	farVoidSaved = nil
-end
-
-local function startFarVoid()
-	stopFarVoid()
-	local root = getRootPart()
-	if root then
-		farVoidSaved = root.CFrame
-	end
-	farVoidConn = RunService.Heartbeat:Connect(function()
-		if not S.VoidSpam then
-			stopFarVoid()
-			return
-		end
-		-- if rage is actively shooting, don't fight rage csync every frame
-		if S.Rage and csync.active then
-			return
-		end
-		local root2 = getRootPart()
-		if not root2 then return end
-		if not farVoidSaved then
-			farVoidSaved = root2.CFrame
-		end
-		-- very far, high enough Y so you don't die (void kill is usually low Y)
-		local p = Vector3.new(
-			math.random(-25000, 25000),
-			5000 + math.random(0, 2000),
-			math.random(-25000, 25000)
-		)
-		pcall(function()
-			root2.CFrame = CFrame.new(p)
-			root2.AssemblyLinearVelocity = Vector3.zero
-		end)
-	end)
-	-- visual restore each frame so you don't see void (client view)
-	RunService:BindToRenderStep("hub_farvoid_vis", Enum.RenderPriority.Camera.Value, function()
-		if not S.VoidSpam or not farVoidSaved then return end
-		if S.Rage and csync.active then return end
-		local root2 = getRootPart()
-		if root2 then
-			pcall(function()
-				root2.CFrame = farVoidSaved
-			end)
-		end
-	end)
-end
-
-task.spawn(function()
-	local was = false
-	while true do
-		task.wait(0.2)
-		if S.VoidSpam and not was then
-			startFarVoid()
-		elseif (not S.VoidSpam) and was then
-			stopFarVoid()
-			pcall(function()
-				RunService:UnbindFromRenderStep("hub_farvoid_vis")
-			end)
-		end
-		was = S.VoidSpam
-	end
-end)
-
--- Rapid Fire (auto + semi pistol/shotgun + melee)
-local function forceZeroInfo(info)
-	if type(info) ~= "table" then return end
-	for k, v in pairs(info) do
-		if type(v) == "number" then
-			local lk = string.lower(tostring(k))
-			if string.find(lk, "cool") or string.find(lk, "delay") or string.find(lk, "rate")
-				or string.find(lk, "interval") or string.find(lk, "ready") or string.find(lk, "wait")
-				or string.find(lk, "shoot") or string.find(lk, "attack") or string.find(lk, "swing")
-				or string.find(lk, "fire") or string.find(lk, "shot") then
-				info[k] = 0
-			end
-		end
-	end
-	-- explicit
-	for _, k in ipairs({
-		"ShootCooldown", "ShotCooldown", "FireCooldown", "FireRate", "Cooldown",
-		"AttackCooldown", "SwingCooldown", "HitCooldown", "DelayBetweenShots",
-		"TimeBetweenShots", "MinShootInterval", "NextShotTime",
-	}) do
-		if type(info[k]) == "number" then
-			info[k] = 0
-		end
-	end
-end
-
-task.spawn(function()
-	for _ = 1, 25 do
-		refreshMods()
-		if GunModule and GunModule.StartShooting then break end
-		task.wait(0.25)
-	end
-
-	if GunModule and GunModule.StartShooting then
-		local prev = GunModule.StartShooting
-		GunModule.StartShooting = function(self, ...)
-			if S.RapidFire then
-				pcall(function()
-					if self.Info then forceZeroInfo(self.Info) end
-				end)
-			end
-			local results = { prev(self, ...) }
-			-- do NOT restore cooldowns while RapidFire (semi-auto needs them stuck at 0)
-			if S.RapidFire then
-				pcall(function()
-					if self.Info then forceZeroInfo(self.Info) end
-				end)
-			end
-			return unpack(results)
-		end
-		print("[hub] rapid fire gun ok")
-	end
-
-	local MeleeModule
-	pcall(function()
-		MeleeModule = require(LP.PlayerScripts.Modules.ItemTypes.Melee)
-	end)
-	if MeleeModule and MeleeModule.StartShooting then
-		local prevM = MeleeModule.StartShooting
-		MeleeModule.StartShooting = function(self, ...)
-			if S.RapidFire then
-				pcall(function()
-					if self.Info then forceZeroInfo(self.Info) end
-				end)
-			end
-			local results = { prevM(self, ...) }
-			if S.RapidFire then
-				pcall(function()
-					if self.Info then forceZeroInfo(self.Info) end
-				end)
-			end
-			return unpack(results)
-		end
-		print("[hub] rapid melee ok")
-	end
-end)
-
--- continuous zero + semi auto re-fire while holding shoot
-local lastSemiFire = 0
-RunService.Heartbeat:Connect(function()
-	if not S.RapidFire then return end
-	local lf = getFighter()
-	if not lf or not lf.EquippedItem then return end
-
-	pcall(function()
-		local item = lf.EquippedItem
-		if item.Info then forceZeroInfo(item.Info) end
-		for _, k in ipairs({"ShootCooldown", "AttackCooldown", "LastShoot", "LastAttack", "NextShot"}) do
-			if type(item[k]) == "number" then item[k] = 0 end
-		end
-	end)
-
-	-- semi-auto assist: while LMB / touch held, keep calling StartShooting path via UseItem
-	local holding = false
-	pcall(function()
-		holding = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-			or UIS:IsKeyDown(Enum.KeyCode.ButtonR2)
-	end)
-	-- mobile: if not keyboard, treat as holding when any touch after short debounce is flaky;
-	-- rely on cooldown zero primarily for mobile
-
-	if holding and tick() - lastSemiFire >= 0.05 then
-		refreshMods()
-		if Utility and EnumLibrary and UseItem then
-			local ok, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
-			local okE, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
-			if ok and oid and okE and se then
-				local root = getRootPart()
-				local from = root and root.Position or Cam.CFrame.Position
-				local to = Cam.CFrame.Position + Cam.CFrame.LookVector * 200
-				local head = nil
-				-- aim at where you're looking; optional nearest if rage
-				pcall(function()
-					local data = encodeShot(from, to, workspace.CurrentCamera)
-					-- better: use look direction empty hit
-					if Utility then
-						local e = Utility:EncodeCFrame(CFrame.new(from, to))
-						data = {
-							[utf8.char(1)] = {
-								[utf8.char(0)] = e,
-								[utf8.char(1)] = e,
-								[utf8.char(2)] = nil,
-								[utf8.char(3)] = Utility:EncodeCFrame(CFrame.new(0.43, 0.25, 0.42)),
-							},
-						}
-						UseItem:FireServer(oid, se, data, nil)
-						lastSemiFire = tick()
-					end
-				end)
-			end
-		end
-	end
-end)
-
-
--- WalkSpeed (Lunara Velocity: AssemblyLinearVelocity * moveDir)
-RunService.Heartbeat:Connect(function()
-	if not S.WalkSpeed then return end
-	local char = LP.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hrp or not hum then return end
-	local moveDir = hum.MoveDirection
-	if moveDir.Magnitude > 0.05 then
-		local spd = S.WalkSpeedValue or 45
-		hrp.AssemblyLinearVelocity = Vector3.new(
-			moveDir.X * spd,
-			hrp.AssemblyLinearVelocity.Y,
-			moveDir.Z * spd
-		)
-	end
-end)
-
--- ESP (reference style: name + thin HP + distance + thin box + skeleton)
-local function getEspFolder()
-	local parent = nil
-	pcall(function()
-		parent = gethui and gethui() or game:GetService("CoreGui")
-	end)
-	if not parent then
-		parent = LP:FindFirstChild("PlayerGui") or LP:WaitForChild("PlayerGui", 5)
-	end
-	local f = parent and parent:FindFirstChild("HubESP")
-	if f then return f end
-	f = Instance.new("Folder")
-	f.Name = "HubESP"
-	f.Parent = parent
-	return f
-end
-
-local function part(char, names)
-	for _, n in ipairs(names) do
-		local p = char:FindFirstChild(n)
-		if p and p:IsA("BasePart") then return p end
-	end
-	return nil
-end
-
-local function skelPairs(char)
-	local pairsList = {}
-	local function add(aNames, bNames)
-		local a = part(char, aNames)
-		local b = part(char, bNames)
-		if a and b then table.insert(pairsList, {a, b}) end
-	end
-	add({"Head"}, {"UpperTorso", "Torso"})
-	add({"UpperTorso"}, {"LowerTorso"})
-	add({"UpperTorso", "Torso"}, {"LeftUpperArm", "Left Arm"})
-	add({"LeftUpperArm"}, {"LeftLowerArm"})
-	add({"LeftLowerArm"}, {"LeftHand"})
-	add({"UpperTorso", "Torso"}, {"RightUpperArm", "Right Arm"})
-	add({"RightUpperArm"}, {"RightLowerArm"})
-	add({"RightLowerArm"}, {"RightHand"})
-	add({"LowerTorso", "Torso"}, {"LeftUpperLeg", "Left Leg"})
-	add({"LeftUpperLeg"}, {"LeftLowerLeg"})
-	add({"LeftLowerLeg"}, {"LeftFoot"})
-	add({"LowerTorso", "Torso"}, {"RightUpperLeg", "Right Leg"})
-	add({"RightUpperLeg"}, {"RightLowerLeg"})
-	add({"RightLowerLeg"}, {"RightFoot"})
-	add({"Torso"}, {"Left Arm"})
-	add({"Torso"}, {"Right Arm"})
-	add({"Torso"}, {"Left Leg"})
-	add({"Torso"}, {"Right Leg"})
-	return pairsList
-end
-
-task.spawn(function()
-	while true do
-		task.wait(0.25)
-		pcall(function()
-			local espFolder = getEspFolder()
-			for _, c in ipairs(espFolder:GetChildren()) do
-				c:Destroy()
-			end
-			if not S.ESP then return end
-			local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-			for _, plr in ipairs(Players:GetPlayers()) do
-				if validEnemy(plr) then
-					local char = plr.Character
-					local hrp = char and char:FindFirstChild("HumanoidRootPart")
-					local head = char and char:FindFirstChild("Head")
-					local hum = char and char:FindFirstChildOfClass("Humanoid")
-					if hrp and hum and hum.Health > 0 then
-						local ratio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
-						local dist = 0
-						if myRoot then
-							dist = math.floor((myRoot.Position - hrp.Position).Magnitude)
-						end
-
-						-- Compact tag like reference (name + thin HP + distance)
-						if S.ESP_Name or S.ESP_HealthBar or S.ESP_Distance then
-							local bb = Instance.new("BillboardGui")
-							bb.Name = "HubTag"
-							bb.Size = UDim2.new(0, 120, 0, 36)
-							bb.StudsOffset = Vector3.new(0, 2.8, 0)
-							bb.AlwaysOnTop = true
-							bb.Adornee = head or hrp
-							bb.Parent = espFolder
-
-							local lay = Instance.new("UIListLayout")
-							lay.FillDirection = Enum.FillDirection.Vertical
-							lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
-							lay.Padding = UDim.new(0, 1)
-							lay.Parent = bb
-
-							if S.ESP_Name then
-								local name = Instance.new("TextLabel")
-								name.Size = UDim2.new(1, 0, 0, 14)
-								name.BackgroundTransparency = 1
-								name.Text = plr.DisplayName or plr.Name
-								name.TextColor3 = Color3.fromRGB(255, 255, 255)
-								name.TextStrokeTransparency = 0.4
-								name.Font = Enum.Font.GothamBold
-								name.TextSize = 12
-								name.Parent = bb
-							end
-
-							if S.ESP_HealthBar then
-								-- thin horizontal bar under name (reference style)
-								local barHold = Instance.new("Frame")
-								barHold.Size = UDim2.new(0, 40, 0, 3)
-								barHold.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-								barHold.BorderSizePixel = 0
-								barHold.Parent = bb
-								local fill = Instance.new("Frame")
-								fill.Size = UDim2.new(ratio, 0, 1, 0)
-								fill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-								fill.BorderSizePixel = 0
-								fill.Parent = barHold
-							end
-
-							if S.ESP_Weapon then
-								local wname, ammo = "?", ""
-								pcall(function()
-									for _, c in ipairs(char:GetChildren()) do
-										if c:IsA("Tool") then wname = c.Name end
-									end
-									local attr = plr:GetAttribute("Weapon") or plr:GetAttribute("EquippedWeapon")
-									if attr then wname = tostring(attr) end
-									local a = plr:GetAttribute("Ammo")
-									if a ~= nil then ammo = " [" .. tostring(a) .. "]" end
-								end)
-								local wlab = Instance.new("TextLabel")
-								wlab.Size = UDim2.new(1, 0, 0, 12)
-								wlab.BackgroundTransparency = 1
-								wlab.Text = tostring(wname) .. tostring(ammo)
-								wlab.TextColor3 = Color3.fromRGB(255, 220, 120)
-								wlab.TextStrokeTransparency = 0.5
-								wlab.Font = Enum.Font.Gotham
-								wlab.TextSize = 11
-								wlab.Parent = bb
-							end
-							if S.ESP_Distance then
-								local dlab = Instance.new("TextLabel")
-								dlab.Size = UDim2.new(1, 0, 0, 12)
-								dlab.BackgroundTransparency = 1
-								dlab.Text = tostring(dist) .. "m"
-								dlab.TextColor3 = Color3.fromRGB(200, 200, 210)
-								dlab.TextStrokeTransparency = 0.5
-								dlab.Font = Enum.Font.Gotham
-								dlab.TextSize = 11
-								dlab.Parent = bb
-							end
-						end
-
-						-- Thin box (SelectionBox light)
-						if S.ESP_Box then
-							local box = Instance.new("BoxHandleAdornment")
-							box.Name = "HubBox"
-							box.Adornee = hrp
-							box.Size = Vector3.new(2.2, 5.2, 2.2)
-							box.Color3 = Color3.fromRGB(255, 255, 255)
-							box.Transparency = 0.85
-							box.AlwaysOnTop = true
-							box.ZIndex = 5
-							box.Parent = espFolder
-							-- outline feel with SelectionBox thinner
-							local sb = Instance.new("SelectionBox")
-							sb.Adornee = char
-							sb.Color3 = Color3.fromRGB(255, 255, 255)
-							sb.LineThickness = 0.015
-							sb.Transparency = 0.35
-							sb.SurfaceTransparency = 1
-							sb.Parent = espFolder
-						end
-
-						-- Skeleton fitted to body (thin beams)
-						if S.ESP_Skeleton then
-							for _, ab in ipairs(skelPairs(char)) do
-								local a, b = ab[1], ab[2]
-								local att0 = Instance.new("Attachment")
-								att0.Parent = a
-								local att1 = Instance.new("Attachment")
-								att1.Parent = b
-								local beam = Instance.new("Beam")
-								beam.Attachment0 = att0
-								beam.Attachment1 = att1
-								beam.Width0 = 0.04
-								beam.Width1 = 0.04
-								beam.FaceCamera = true
-								beam.LightEmission = 0.3
-								beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
-								beam.Transparency = NumberSequence.new(0.15)
-								beam.Parent = espFolder
-							end
-						end
-					end
-				end
-			end
-		end)
-	end
-end)
-
--- Spoofs
--- Level + WinStreak (Lunara path)
-task.spawn(function()
-	while true do
-		task.wait(0.4)
-		if S.LevelSpoof then
-			pcall(function()
-				LP:SetAttribute("Level", S.Level)
-			end)
-		end
-		if S.WinStreakSpoof then
-			pcall(function()
-				local ls = LP:FindFirstChild("CustomLeaderstats")
-				if ls then
-					local ws = ls:FindFirstChild("Win Streak") or ls:FindFirstChild("WinStreak")
-					if ws then
-						ws.Value = S.WinStreak
-					end
-				end
-				LP:SetAttribute("WinStreak", S.WinStreak)
-			end)
-		end
-	end
-end)
-
--- Noclip
-RunService.Stepped:Connect(function()
-	if not S.Noclip then return end
-	local char = LP.Character
-	if not char then return end
-	for _, p in ipairs(char:GetDescendants()) do
-		if p:IsA("BasePart") then
-			p.CanCollide = false
-		end
-	end
-end)
-
--- Fly (Lunara-style BodyVelocity + BodyGyro)
-local flyConn = nil
-local flyBV = nil
-local flyBG = nil
-
-local function cleanupFly()
-	if flyConn then
-		flyConn:Disconnect()
-		flyConn = nil
-	end
-	if flyBV then
-		pcall(function() flyBV:Destroy() end)
-		flyBV = nil
-	end
-	if flyBG then
-		pcall(function() flyBG:Destroy() end)
-		flyBG = nil
-	end
-	local char = LP.Character
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	if hrp then
-		pcall(function()
-			hrp.AssemblyLinearVelocity = Vector3.zero
-		end)
-	end
-	if hum then
-		pcall(function()
-			hum.PlatformStand = false
-			hum:ChangeState(Enum.HumanoidStateType.Running)
-		end)
-	end
-end
-
-local function startFly()
-	cleanupFly()
-	local char = LP.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hrp or not hum then return end
-
-	flyBV = Instance.new("BodyVelocity")
-	flyBV.Name = "HubFly"
-	flyBV.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-	flyBV.Velocity = Vector3.zero
-	flyBV.Parent = hrp
-
-	flyBG = Instance.new("BodyGyro")
-	flyBG.Name = "HubFlyGyro"
-	flyBG.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-	flyBG.P = 1000
-	flyBG.Parent = hrp
-
-	pcall(function()
-		hum:ChangeState(Enum.HumanoidStateType.PlatformStanding)
-	end)
-
-	flyConn = RunService.Heartbeat:Connect(function()
-		if not S.Fly then
-			cleanupFly()
-			return
-		end
-		local char2 = LP.Character
-		if not char2 or not char2.Parent then
-			cleanupFly()
-			return
-		end
-		local hrp2 = char2:FindFirstChild("HumanoidRootPart")
-		local hum2 = char2:FindFirstChildOfClass("Humanoid")
-		if not hrp2 or not hum2 then
-			cleanupFly()
-			return
-		end
-
-		-- recreate movers if lost (respawn / reset)
-		if not flyBV or flyBV.Parent ~= hrp2 then
-			if flyBV then pcall(function() flyBV:Destroy() end) end
-			flyBV = Instance.new("BodyVelocity")
-			flyBV.Name = "HubFly"
-			flyBV.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-			flyBV.Parent = hrp2
-		end
-		if not flyBG or flyBG.Parent ~= hrp2 then
-			if flyBG then pcall(function() flyBG:Destroy() end) end
-			flyBG = Instance.new("BodyGyro")
-			flyBG.Name = "HubFlyGyro"
-			flyBG.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-			flyBG.P = 1000
-			flyBG.Parent = hrp2
-		end
-
-		local cam = Workspace.CurrentCamera
-		local look = cam.CFrame.LookVector
-		local right = cam.CFrame.RightVector
-		local move = Vector3.zero
-
-		-- PC (Lunara exact)
-		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) or UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-			move = move - Vector3.new(0, 1, 0)
-		end
-
-		-- Mobile: camera-relative stick (stick up = look forward)
-		if move.Magnitude < 0.05 then
-			local mv = nil
-			if controls and controls.GetMoveVector then
-				local ok, v = pcall(function() return controls:GetMoveVector() end)
-				if ok then mv = v end
-			end
-			if typeof(mv) == "Vector3" and mv.Magnitude > 0.1 then
-				-- standard: -Z forward in camera space for control modules
-				move = (right * mv.X) + (look * -mv.Z)
-			end
-		end
-
-		if move.Magnitude > 0.1 then
-			flyBV.Velocity = move.Unit * S.FlySpeed
-		else
-			flyBV.Velocity = Vector3.zero
-		end
-		-- gyro follows full camera (Lunara)
-		flyBG.CFrame = cam.CFrame
-
-		if hum2:GetState() ~= Enum.HumanoidStateType.PlatformStanding then
-			pcall(function()
-				hum2:ChangeState(Enum.HumanoidStateType.PlatformStanding)
-			end)
-		end
-	end)
-end
-
--- watch S.Fly toggles (polled lightly)
-task.spawn(function()
-	local was = false
-	while true do
-		task.wait(0.15)
-		if S.Fly and not was then
-			startFly()
-		elseif (not S.Fly) and was then
-			cleanupFly()
-		end
-		was = S.Fly
-	end
-end)
-
-LP.CharacterAdded:Connect(function()
-	if S.Fly then
-		task.wait(0.5)
-		if S.Fly then startFly() end
-	end
-end)
-
-
--- FOV circle
-task.spawn(function()
-	local pg = LP:WaitForChild("PlayerGui", 10)
-	if not pg then return end
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "HubFOV"
-	sg.ResetOnSpawn = false
-	sg.IgnoreGuiInset = true
-	sg.Parent = pg
-	local ring = Instance.new("Frame")
-	ring.AnchorPoint = Vector2.new(0.5, 0.5)
-	ring.Position = UDim2.fromScale(0.5, 0.5)
-	ring.BackgroundTransparency = 1
-	ring.Parent = sg
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(255, 255, 255)
+	local stroke = Instance.new("UIStroke", header)
+	stroke.Color = color
 	stroke.Thickness = 1
-	stroke.Transparency = 0.3
-	stroke.Parent = ring
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = ring
-	RunService.RenderStepped:Connect(function()
-		if not S.ShowFOV then
-			ring.Visible = false
-			return
-		end
-		ring.Visible = true
-		local fov = S.Aimbot and (S.AimFOV or 300) or (S.TrigFOV or 120)
-		ring.Size = UDim2.fromOffset(fov * 2, fov * 2)
+end
+
+local function createWordCard(word, isHanbang, order)
+	local card = Instance.new("Frame", ScrollFrame)
+	card.Size = UDim2.new(1, -6, 0, 32)
+	card.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+	card.LayoutOrder = order
+
+	local cardStroke = Instance.new("UIStroke", card)
+	cardStroke.Color = isHanbang and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(0, 102, 255)
+	cardStroke.Thickness = 1.5
+
+	local btn = Instance.new("TextButton", card)
+	btn.Size = UDim2.new(1, 0, 1, 0)
+	btn.BackgroundTransparency = 1
+	btn.Text = ""
+
+	local wordLabel = Instance.new("TextLabel", card)
+	wordLabel.Size = UDim2.new(0.9, 0, 1, 0)
+	wordLabel.Position = UDim2.new(0.05, 0, 0, 0)
+	wordLabel.BackgroundTransparency = 1
+	wordLabel.TextColor3 = isHanbang and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(255, 255, 255)
+	wordLabel.Text = (isHanbang and "🔥 [한방] " or "🌸 [일반] ") .. word
+	wordLabel.Font = Enum.Font.SourceSansBold
+	wordLabel.TextSize = 13
+	wordLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+	btn.MouseButton1Click:Connect(function()
+		SearchInput.Text = word
 	end)
+end
+
+local function updateWords(inputText)
+	for _, v in pairs(ScrollFrame:GetChildren()) do
+		if v:IsA("Frame") or v:IsA("TextLabel") then v:Destroy() end
+	end
+	
+	if #inputText == 0 then return end
+	
+	local rawChar = getLastCharacter(inputText)
+	local targetChar = applyDooum(rawChar)
+	local currentOrder = 1
+
+	local hanbangList = {}
+	local normalList = {}
+
+	local wordList = WordData[targetChar] or WordData[rawChar]
+
+	if wordList then
+		for _, word in ipairs(wordList) do
+			local endChar = getLastCharacter(word)
+			if HanbangEndings[endChar] then
+				table.insert(hanbangList, word)
+			else
+				table.insert(normalList, word)
+			end
+		end
+	end
+
+	if #hanbangList > 0 then
+		createHeader("🔥 [한방 공격 단어]", Color3.fromRGB(255, 100, 100), currentOrder)
+		currentOrder = currentOrder + 1
+		for _, w in ipairs(hanbangList) do
+			createWordCard(w, true, currentOrder)
+			currentOrder = currentOrder + 1
+		end
+	end
+
+	if #normalList > 0 then
+		createHeader("🌸 [일반/방어 단어]", Color3.fromRGB(0, 102, 255), currentOrder)
+		currentOrder = currentOrder + 1
+		for _, w in ipairs(normalList) do
+			createWordCard(w, false, currentOrder)
+			currentOrder = currentOrder + 1
+		end
+	end
+end
+
+SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+	updateWords(SearchInput.Text)
 end)
 
--- No Recoil / No Spread (Lunara style)
+--------------------------------------------------------------------------------
+-- 4. [게임 화면 제시어 실시간 자동 감지]
+--------------------------------------------------------------------------------
 task.spawn(function()
-	for _ = 1, 20 do
-		refreshMods()
-		if GunModule then break end
-		task.wait(0.3)
-	end
-	if GunModule and GunModule._Recoil then
-		local oldR = GunModule._Recoil
-		GunModule._Recoil = function(self, mult)
-			if S.NoRecoil then return end
-			return oldR(self, mult)
-		end
-		print("[hub] no recoil hooked")
-	end
-	pcall(function()
-		local GU = require(RS.Modules.GameplayUtility)
-		if GU and GU.GetSpread then
-			local oldS = GU.GetSpread
-			GU.GetSpread = function(...)
-				if S.NoSpread then
-					return CFrame.new()
-				end
-				return oldS(...)
-			end
-			print("[hub] no spread hooked")
-		end
-	end)
-end)
-
--- Freecam
-local freecam = { cam = nil, conn = nil, pos = nil }
-function stopFreecam()
-	if freecam.conn then freecam.conn:Disconnect(); freecam.conn = nil end
-	pcall(function()
-		local cam = Workspace.CurrentCamera
-		if cam then cam.CameraType = Enum.CameraType.Custom end
-	end)
-	freecam.pos = nil
-end
-function startFreecam()
-	stopFreecam()
-	local cam = Workspace.CurrentCamera
-	freecam.pos = cam.CFrame
-	cam.CameraType = Enum.CameraType.Scriptable
-	freecam.conn = RunService.RenderStepped:Connect(function(dt)
-		if not S.Freecam then stopFreecam() return end
-		local cam2 = Workspace.CurrentCamera
-		cam2.CameraType = Enum.CameraType.Scriptable
-		local look = cam2.CFrame.LookVector
-		local right = cam2.CFrame.RightVector
-		local move = Vector3.zero
-		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move = move - Vector3.new(0, 1, 0) end
-		if controls and controls.GetMoveVector then
-			local ok, mv = pcall(function() return controls:GetMoveVector() end)
-			if ok and typeof(mv) == "Vector3" and mv.Magnitude > 0.05 then
-				move = move + right * mv.X + look * (-mv.Z)
-			end
-		end
-		if move.Magnitude > 0 then
-			freecam.pos = freecam.pos + move.Unit * (S.FreecamSpeed or 50) * dt
-		end
-		-- mouse look approx: keep scriptable at freecam.pos with current look from last cam
-		freecam.pos = CFrame.new(freecam.pos.Position, freecam.pos.Position + cam2.CFrame.LookVector)
-		cam2.CFrame = freecam.pos
-	end)
-end
-
--- Config save/load (named)
-local CFG_FOLDER = "cutegirl_configs"
-function saveConfig(name)
-	name = tostring(name or "default"):gsub("[^%w_%-]", "")
-	if name == "" then name = "default" end
-	pcall(function()
-		if not writefile then
-			notify("writefile N/A")
-			return
-		end
-		if makefolder then pcall(makefolder, CFG_FOLDER) end
-		local HttpService = game:GetService("HttpService")
-		writefile(CFG_FOLDER .. "/" .. name .. ".json", HttpService:JSONEncode(S))
-		notify("Saved: " .. name)
+	while task.wait(0.5) do
 		pcall(function()
-			if getgenv()._HUB_REFRESH_CFG then getgenv()._HUB_REFRESH_CFG() end
+			for _, guiObj in ipairs(playerGui:GetDescendants()) do
+				if guiObj:IsA("TextLabel") and (guiObj.Text:find("으로 시작하는 단어") or guiObj.Text:find("로 시작하는 단어")) then
+					local char = guiObj.Text:match("'([^']+)'")
+					if char and char ~= "" and SearchInput.Text ~= char then
+						SearchInput.Text = char
+					end
+				end
+			end
 		end)
-	end)
-end
-function loadConfig(name)
-	name = tostring(name or "default"):gsub("[^%w_%-]", "")
-	if name == "" then name = "default" end
-	pcall(function()
-		local path = CFG_FOLDER .. "/" .. name .. ".json"
-		if not (readfile and isfile and isfile(path)) then
-			notify("No config: " .. name)
-			return
-		end
-		local HttpService = game:GetService("HttpService")
-		local data = HttpService:JSONDecode(readfile(path))
-		if type(data) == "table" then
-			for k, v in pairs(data) do
-				if S[k] ~= nil then S[k] = v end
-			end
-			notify("Loaded: " .. name)
-			pcall(function()
-				if getgenv()._HUB_REFRESH_CFG then getgenv()._HUB_REFRESH_CFG() end
-			end)
-		end
-	end)
-end
-function listConfigs()
-	pcall(function()
-		if not listfiles then
-			notify("listfiles N/A")
-			return
-		end
-		local files = listfiles(CFG_FOLDER)
-		local names = {}
-		for _, f in ipairs(files or {}) do
-			local n = tostring(f):match("([^/\\]+)%.json$")
-			if n then table.insert(names, n) end
-		end
-		if #names == 0 then
-			notify("No configs")
-		else
-			notify("Configs: " .. table.concat(names, ", "))
-			print("[hub] configs:", table.concat(names, ", "))
-		end
-	end)
-end
-pcall(function() loadConfig("default") end)
-
-
-
-
-
--- ========== ADDONS ==========
-
--- Auto Reload (fill CurrentAmmo when low / cancel reload)
-RunService.Heartbeat:Connect(function()
-	if not S.AutoReload then return end
-	pcall(function()
-		local lf = getFighter and getFighter() or nil
-		if not lf or not lf.EquippedItem then return end
-		local item = lf.EquippedItem
-		local maxAmmo = item:Get("MaxAmmo") or item:Get("MaxBullets") or item:Get("MagazineSize")
-		if type(maxAmmo) ~= "number" or maxAmmo <= 0 then maxAmmo = 30 end
-		local cur = item:Get("CurrentAmmo") or item:Get("Ammo") or item:Get("Bullets")
-		if type(cur) == "number" and cur <= 0 then
-			if item.Set then
-				item:Set("CurrentAmmo", maxAmmo)
-				item:Set("Ammo", maxAmmo)
-				item:Set("Reloading", false)
-				item:Set("IsReloading", false)
-			end
-		elseif type(cur) == "number" and cur < maxAmmo then
-			if item.Set then
-				item:Set("CurrentAmmo", maxAmmo)
-				item:Set("Ammo", maxAmmo)
-			end
-		end
-		if item.Info and type(item.Info) == "table" then
-			if type(item.Info.MaxAmmo) == "number" then
-				item.Info.Ammo = item.Info.MaxAmmo
-				item.Info.CurrentAmmo = item.Info.MaxAmmo
-			end
-			item.Info.Reloading = false
-		end
-	end)
-end)
-
--- Desync: client visual stay, server root briefly offset (csync style)
-local desyncVis = nil
-RunService.Heartbeat:Connect(function()
-	if not S.Desync then
-		return
-	end
-	pcall(function()
-		local char = LP.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		-- store visual CF
-		local visual = hrp.CFrame
-		-- push server replication down (void) then restore next render
-		local voidCF = visual - Vector3.new(0, 80, 0)
-		hrp.CFrame = voidCF
-		RunService.RenderStepped:Wait()
-		if hrp and hrp.Parent then
-			hrp.CFrame = visual
-		end
-	end)
-end)
-
--- Wallbang + Ragebot2
-local function wbName()
-	local n = ""
-	pcall(function()
-		local lf = getFighter()
-		if lf and lf.EquippedItem then
-			n = string.lower(tostring(lf.EquippedItem:Get("Name") or lf.EquippedItem.Name or ""))
-		end
-	end)
-	return n
-end
-local function wbIsThrow()
-	local n = wbName()
-	if n == "" then return false end
-	if string.find(n, "slingshot", 1, true) then return true end
-	if string.find(n, "dagger", 1, true) then return true end
-	if string.find(n, "bow", 1, true) and not string.find(n, "cross", 1, true) then return true end
-	return false
-end
-local function wbHold()
-	local h = false
-	pcall(function()
-		h = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-			or UIS:IsKeyDown(Enum.KeyCode.ButtonR2)
-	end)
-	return h
-end
-local function wbHead()
-	local head
-	pcall(function()
-		if getNearest then head = getNearest(true) end
-		if not head and getTarget then head = getTarget(true, 9999) end
-	end)
-	if head and head.Parent then
-		local x = head.Parent:FindFirstChild("HitboxHead") or head.Parent:FindFirstChild("Head")
-		if x then head = x end
-	end
-	return head
-end
-local function wbShoot(head)
-	if not head then return false end
-	pcall(function() if refreshMods then refreshMods() end end)
-	if not (Utility and EnumLibrary and UseItem) then return false end
-	local lf = getFighter and getFighter() or nil
-	if not lf or not lf.EquippedItem then return false end
-	local ok1, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
-	local ok2, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
-	if not (ok1 and oid and ok2 and se) then return false end
-	local root = getRootPart and getRootPart() or nil
-	local from = root and root.Position or Cam.CFrame.Position
-	local data
-	pcall(function()
-		if encodeShot then
-			data = encodeShot(from, head.Position, head)
-		else
-			local e = Utility:EncodeCFrame(CFrame.new(from, head.Position))
-			data = {
-				[utf8.char(1)] = {
-					[utf8.char(0)] = e,
-					[utf8.char(1)] = e,
-					[utf8.char(2)] = head,
-					[utf8.char(3)] = Utility:EncodeCFrame(CFrame.new(0.43, 0.25, 0.42)),
-				},
-			}
-		end
-	end)
-	if not data then return false end
-	return pcall(function() UseItem:FireServer(oid, se, data, nil) end)
-end
-local tRB2, tWB = 0, 0
-RunService.Heartbeat:Connect(function()
-	pcall(function()
-		if S.Ragebot2 and wbIsThrow() and wbHold() and tick() - tRB2 > 0.07 then
-			if wbShoot(wbHead()) then tRB2 = tick() end
-		end
-		if S.Wallbang and not S.Rage and not wbIsThrow() and wbHold() and tick() - tWB > 0.05 then
-			if wbShoot(wbHead()) then tWB = tick() end
-		end
-	end)
-end)
-task.spawn(function()
-	for _ = 1, 25 do
-		pcall(function() if refreshMods then refreshMods() end end)
-		if GunModule and GunModule.StartShooting then break end
-		task.wait(0.25)
-	end
-	if not (GunModule and GunModule.StartShooting) then return end
-	local prev = GunModule.StartShooting
-	GunModule.StartShooting = function(self, ...)
-		local a, b, c, d, e = prev(self, ...)
-		if not ((S.Wallbang or S.Ragebot2) and not S.Rage) then return a, b, c, d, e end
-		local isLocal = false
-		pcall(function()
-			local cf = self.ClientFighter
-			if cf and (cf.IsLocalPlayer or cf.Player == LP) then isLocal = true end
-		end)
-		if not isLocal or type(c) ~= "table" then return a, b, c, d, e end
-		local throw = wbIsThrow()
-		if throw and not S.Ragebot2 then return a, b, c, d, e end
-		if not throw and not S.Wallbang then return a, b, c, d, e end
-		local head = wbHead()
-		if head and Utility then
-			pcall(function()
-				local root = getRootPart and getRootPart() or nil
-				local from = root and root.Position or Cam.CFrame.Position
-				local data = encodeShot and encodeShot(from, head.Position, head)
-				if data and data[utf8.char(1)] then
-					c[utf8.char(1)] = data[utf8.char(1)]
-					c[utf8.char(0)] = data[utf8.char(1)][utf8.char(0)]
-					c[utf8.char(2)] = head
-					d = true
-				end
-			end)
-		end
-		return a, b, c, d, e
-	end
-	print("[hub] Wallbang/Ragebot2/Desync ready")
-end)
-
--- Hit Notify
-local lastHP = {}
-RunService.Heartbeat:Connect(function()
-	if not S.HitNotify then return end
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= LP and plr.Character then
-			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-			if hum then
-				local id = plr.UserId
-				local hp = hum.Health
-				local prev = lastHP[id]
-				if prev and hp < prev - 0.5 then
-					local dmg = math.floor(prev - hp + 0.5)
-					if hp <= 0 then
-						notify("Kill  " .. (plr.DisplayName or plr.Name))
-					else
-						notify(string.format("-%d  %s", dmg, plr.DisplayName or plr.Name))
-					end
-				end
-				lastHP[id] = hp
-			end
-		end
 	end
 end)
 
--- Anti Flash / Smoke
-task.spawn(function()
-	while true do
-		task.wait(0.25)
-		if S.AntiFlash or S.AntiSmoke then
-			pcall(function()
-				local pg = LP:FindFirstChild("PlayerGui")
-				if pg then
-					for _, o in ipairs(pg:GetDescendants()) do
-						local n = string.lower(o.Name)
-						if S.AntiFlash and (string.find(n, "flash") or string.find(n, "blind")) then
-							if o:IsA("GuiObject") then o.Visible = false end
-							if o:IsA("ImageLabel") then o.ImageTransparency = 1 end
-						end
-						if S.AntiSmoke and string.find(n, "smoke") then
-							if o:IsA("GuiObject") then o.Visible = false end
-						end
-					end
-				end
-				if S.AntiFlash then
-					local l = game:GetService("Lighting")
-					for _, c in ipairs(l:GetChildren()) do
-						local n = string.lower(c.Name)
-						if string.find(n, "flash") or string.find(n, "blind") then
-							c:Destroy()
-						end
-					end
-				end
-				if S.AntiSmoke then
-					for _, o in ipairs(Workspace:GetDescendants()) do
-						if o:IsA("Smoke") then o.Enabled = false end
-					end
-				end
-			end)
-		end
-	end
-end)
-
--- Crosshair
-task.spawn(function()
-	local pg = LP:WaitForChild("PlayerGui", 15)
-	if not pg then return end
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "HubCrosshair"
-	sg.ResetOnSpawn = false
-	sg.IgnoreGuiInset = true
-	sg.DisplayOrder = 50
-	sg.Parent = pg
-	local function line(sz, pos)
-		local f = Instance.new("Frame")
-		f.Size = sz
-		f.Position = pos
-		f.AnchorPoint = Vector2.new(0.5, 0.5)
-		f.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
-		f.BorderSizePixel = 0
-		f.Parent = sg
-		return f
-	end
-	local h = line(UDim2.fromOffset(14, 2), UDim2.fromScale(0.5, 0.5))
-	local v = line(UDim2.fromOffset(2, 14), UDim2.fromScale(0.5, 0.5))
-	local d = line(UDim2.fromOffset(3, 3), UDim2.fromScale(0.5, 0.5))
-	RunService.RenderStepped:Connect(function()
-		local on = S.CustomCrosshair == true
-		h.Visible = on
-		v.Visible = on
-		d.Visible = on
-	end)
-end)
-
--- Spectators
-task.spawn(function()
-	local pg = LP:WaitForChild("PlayerGui", 15)
-	if not pg then return end
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "HubSpecs"
-	sg.ResetOnSpawn = false
-	sg.IgnoreGuiInset = true
-	sg.DisplayOrder = 40
-	sg.Parent = pg
-	local lab = Instance.new("TextLabel")
-	lab.Size = UDim2.new(0, 200, 0, 90)
-	lab.Position = UDim2.new(1, -210, 0, 80)
-	lab.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-	lab.BackgroundTransparency = 0.25
-	lab.BorderSizePixel = 1
-	lab.BorderColor3 = Color3.fromRGB(140, 100, 255)
-	lab.TextColor3 = Color3.fromRGB(230, 230, 240)
-	lab.Font = Enum.Font.Code
-	lab.TextSize = 12
-	lab.TextXAlignment = Enum.TextXAlignment.Left
-	lab.TextYAlignment = Enum.TextYAlignment.Top
-	lab.Visible = false
-	lab.Parent = sg
-	while true do
-		task.wait(0.6)
-		if not S.ShowSpectators then
-			lab.Visible = false
-		else
-			local specs = {}
-			for _, plr in ipairs(Players:GetPlayers()) do
-				if plr ~= LP then
-					local mark = false
-					pcall(function()
-						local st = plr:GetAttribute("SpectateTarget") or plr:GetAttribute("Spectating")
-						if tostring(st) == LP.Name or st == LP.UserId then mark = true end
-					end)
-					local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-					if not plr.Character or (hum and hum.Health <= 0) then
-						table.insert(specs, (plr.DisplayName or plr.Name) .. " (dead)")
-					elseif mark then
-						table.insert(specs, plr.DisplayName or plr.Name)
-					end
-				end
-			end
-			lab.Visible = true
-			lab.Text = #specs == 0 and " Spectators:\n  (none)" or (" Spectators:\n  " .. table.concat(specs, "\n  "))
-		end
-	end
-end)
-
-function doServerHop()
-	notify("Server hopping...")
-	pcall(function()
-		local HttpService = game:GetService("HttpService")
-		local TeleportService = game:GetService("TeleportService")
-		local placeId = game.PlaceId
-		local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
-		local body
-		pcall(function()
-			if game.HttpGet then body = game:HttpGet(url) end
-		end)
-		if not body then
-			TeleportService:Teleport(placeId, LP)
-			return
-		end
-		local data = HttpService:JSONDecode(body)
-		local job = game.JobId
-		for _, s in ipairs((data and data.data) or {}) do
-			if s.id ~= job and (s.playing or 0) > 0 and (s.playing or 0) < (s.maxPlayers or 99) then
-				TeleportService:TeleportToPlaceInstance(placeId, s.id, LP)
-				return
-			end
-		end
-		TeleportService:Teleport(placeId, LP)
-	end)
-end
-
-
-print("[hub] clean rebuild loaded")
+print("큐트걸 허브 - 대규모 단어 사옥 패치 완료!")
