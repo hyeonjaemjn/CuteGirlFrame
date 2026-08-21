@@ -1,0 +1,1988 @@
+--[[ EXACT Lunara_UI_Only + features AFTER print ready ]]
+_G.HUB = _G.HUB or {
+	Aimbot = false, AimSmooth = 0.3, AimFOV = 300, SilentAim = false, Triggerbot = false,
+	TrigFOV = 120, ShowFOV = false, Rage = false, Wallbang = false, Ragebot2 = false,
+	VoidSpam = false, Desync = false, AutoReload = false, HitNotify = false,
+	AntiFlash = false, AntiSmoke = false, CustomCrosshair = false, ShowSpectators = false,
+	ESP = false, ESP_Name = false, ESP_HealthBar = false, ESP_Distance = false,
+	ESP_Box = false, ESP_Skeleton = false, ESP_Weapon = false,
+	LevelSpoof = false, Level = 9999, WinStreakSpoof = false, WinStreak = 9999,
+	DeviceSpoof = false, DeviceName = "PC", Noclip = false, UnlockAll = false,
+	Fly = false, FlySpeed = 60, TeamCheck = true, WallCheck = true,
+	RapidFire = false, NoRecoil = false, NoSpread = false,
+	WalkSpeed = false, WalkSpeedValue = 45, Freecam = false, FreecamSpeed = 50,
+}
+local S = _G.HUB
+
+--[[ Lunara UI only Ã¢â‚¬â€ extracted from remecide loader / backscript ]]
+-- Original obfuscated file only loaded:
+--   https://raw.githubusercontent.com/thegop7y-ui/Lunara-backscript/.../Lunara-backscript.txt
+-- That file uses LinoriaLib for UI.
+
+local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+Library.ShowToggleFrameInKeybinds = true
+Library.ShowCustomCursor = false
+Library.NotifySide = "Left"
+
+local Window = Library:CreateWindow({
+	Title = utf8.char(0xD050, 0xAC78) .. " " .. utf8.char(0xB098, 0xB2E4) .. " hub free v1",
+	Center = true,
+	AutoShow = true,
+	Resizable = true,
+	ShowCustomCursor = false,
+	UnlockMouseWhileOpen = true,
+	NotifySide = "Left",
+	TabPadding = 8,
+	MenuFadeTime = 0.2,
+})
+
+local Tabs = {
+	Combat = Window:AddTab("Combat"),
+	Character = Window:AddTab("Character"),
+	Visuals = Window:AddTab("Visuals"),
+	World = Window:AddTab("World"),
+	Misc = Window:AddTab("Misc"),
+	Settings = Window:AddTab("Settings"),
+}
+
+-- Combat
+local GunBox = Tabs.Combat:AddLeftGroupbox("gun")
+GunBox:AddToggle("SilentAim", { Text = "Silent Aim", Default = false, Callback = function(v) S.SilentAim = v end })
+GunBox:AddToggle("AimbotToggle", { Text = "Aimbot", Default = false, Callback = function(v) S.Aimbot = v end })
+GunBox:AddToggle("ShowFOV", { Text = "show fov", Default = false, Callback = function(v) S.ShowFOV = v end })
+GunBox:AddToggle("NoCooldown", { Text = "Rapid Fire", Default = false, Callback = function(v) S.RapidFire = v end })
+GunBox:AddToggle("NoSpread", { Text = "No Spread", Default = false, Callback = function(v) S.NoSpread = v end })
+GunBox:AddToggle("NoRecoil", { Text = "No Recoil", Default = false, Callback = function(v) S.NoRecoil = v end })
+GunBox:AddToggle("AntiKatana", { Text = "anti katana", Default = false })
+
+local TracerBox = Tabs.Combat:AddRightGroupbox("bullet tracers")
+TracerBox:AddToggle("HitEffects", { Text = "Enable", Default = false })
+TracerBox:AddToggle("HitSounds", { Text = "Enable", Default = false })
+
+-- Character
+local MoveBox = Tabs.Character:AddRightGroupbox("Movement")
+MoveBox:AddToggle("Fly", { Text = "Fly", Default = false, Callback = function(v) S.Fly = v end })
+MoveBox:AddToggle("Noclip", { Text = "Noclip", Default = false, Callback = function(v) S.Noclip = v end })
+MoveBox:AddToggle("WalkSpeed", { Text = "Walk Speed", Default = false, Callback = function(v) S.WalkSpeed = v end })
+
+local AntiAimBox = Tabs.Character:AddLeftGroupbox("Anti Aim")
+AntiAimBox:AddToggle("Desync", { Text = "Desync", Default = false, Callback = function(v) S.Desync = v end })
+
+-- Visuals
+local EspBox = Tabs.Visuals:AddLeftGroupbox("esp")
+EspBox:AddToggle("ESP", { Text = "ESP", Default = false, Callback = function(v) S.ESP = v end })
+EspBox:AddToggle("ESP_Box", { Text = "Box", Default = false, Callback = function(v) S.ESP_Box = v end })
+EspBox:AddToggle("ESP_Health", { Text = "Health Bar", Default = false, Callback = function(v) S.ESP_HealthBar = v end })
+EspBox:AddToggle("ESP_Name", { Text = "Name", Default = false, Callback = function(v) S.ESP_Name = v end })
+
+local UtilBox = Tabs.Visuals:AddRightGroupbox("utility")
+UtilBox:AddToggle("Crosshair", { Text = "Crosshair", Default = false, Callback = function(v) S.CustomCrosshair = v end })
+
+-- World
+local LightBox = Tabs.World:AddRightGroupbox("lighting")
+LightBox:AddToggle("Fullbright", { Text = "Fullbright", Default = false })
+
+-- Misc
+local UnlockBox = Tabs.Misc:AddLeftGroupbox("Unlock")
+UnlockBox:AddToggle("UnlockAll", { Text = "Unlock All", Default = false, Callback = function(v) S.UnlockAll = v; pcall(function() if v and runLunaraUnlockAll then runLunaraUnlockAll() end end) end })
+
+local DeviceBox = Tabs.Misc:AddRightGroupbox("Device Spoofer")
+DeviceBox:AddToggle("DeviceSpoof", { Text = "Device Spoof", Default = false, Callback = function(v) S.DeviceSpoof = v; pcall(function() if v and applyDeviceSpoof then applyDeviceSpoof(true) elseif not v and restoreRealDevice then restoreRealDevice() end end) end })
+
+local MiscBox = Tabs.Misc:AddRightGroupbox("Miscellaneous")
+MiscBox:AddToggle("AntiFlash", { Text = "Anti Flash", Default = false, Callback = function(v) S.AntiFlash = v end })
+
+
+-- extra features toggles (same window)
+GunBox:AddToggle("Triggerbot", { Text = "Triggerbot", Default = false, Callback = function(v) S.Triggerbot = v end })
+GunBox:AddToggle("TeamCheck", { Text = "Team Check", Default = true, Callback = function(v) S.TeamCheck = v end })
+GunBox:AddToggle("WallCheck", { Text = "Wall Check", Default = true, Callback = function(v) S.WallCheck = v end })
+GunBox:AddSlider("AimFOV", { Text = "Aim FOV", Default = 300, Min = 50, Max = 800, Rounding = 0, Callback = function(v) S.AimFOV = v end })
+local RageBox = Tabs.Combat:AddRightGroupbox("rage")
+RageBox:AddToggle("Rage", { Text = "Ragebot", Default = false, Callback = function(v) S.Rage = v end })
+RageBox:AddToggle("VoidSpam", { Text = "Void Spam", Default = false, Callback = function(v) S.VoidSpam = v end })
+RageBox:AddToggle("HitNotify", { Text = "Hit Notify", Default = false, Callback = function(v) S.HitNotify = v end })
+MoveBox:AddSlider("FlySpeed", { Text = "Fly Speed", Default = 60, Min = 10, Max = 300, Rounding = 0, Callback = function(v) S.FlySpeed = v end })
+MoveBox:AddSlider("WalkSpeedValue", { Text = "Walk Value", Default = 45, Min = 16, Max = 200, Rounding = 0, Callback = function(v) S.WalkSpeedValue = v end })
+EspBox:AddToggle("ESP_Skeleton", { Text = "Skeleton", Default = false, Callback = function(v) S.ESP_Skeleton = v end })
+EspBox:AddToggle("ESP_Distance", { Text = "Distance", Default = false, Callback = function(v) S.ESP_Distance = v end })
+EspBox:AddToggle("ESP_Weapon", { Text = "Weapon", Default = false, Callback = function(v) S.ESP_Weapon = v end })
+local SpoofBox = Tabs.Character:AddLeftGroupbox("Spoof")
+SpoofBox:AddToggle("LevelSpoof", { Text = "Level Spoof", Default = false, Callback = function(v) S.LevelSpoof = v end })
+SpoofBox:AddSlider("Level", { Text = "Level", Default = 9999, Min = 1, Max = 99999, Rounding = 0, Callback = function(v) S.Level = v end })
+SpoofBox:AddToggle("WinStreakSpoof", { Text = "WinStreak Spoof", Default = false, Callback = function(v) S.WinStreakSpoof = v end })
+DeviceBox:AddDropdown("DeviceName", {
+	Text = "Device", Values = { "PC", "Mobile", "Console", "VR" }, Default = 1,
+	Callback = function(v) S.DeviceName = v; pcall(function() if S.DeviceSpoof and applyDeviceSpoof then applyDeviceSpoof(true) end end) end,
+})
+
+-- Settings
+local MenuBox = Tabs.Settings:AddLeftGroupbox("menu settings")
+MenuBox:AddLabel(utf8.char(0xD050, 0xAC78) .. " " .. utf8.char(0xB098, 0xB2E4) .. " hub free v1")
+MenuBox:AddLabel("features after UI")
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+ThemeManager:ApplyToTab(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Library:Notify(utf8.char(0xD050, 0xAC78) .. " " .. utf8.char(0xB098, 0xB2E4) .. " hub free v1" .. " ready", 3)
+print("[UI] ready")
+
+
+-- features AFTER UI (cannot affect CreateWindow)
+task.defer(function()
+	local ok, err = pcall(function()
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LP = Players.LocalPlayer
+local Cam = Workspace.CurrentCamera
+
+S = _G.HUB
+
+local function notify(t)
+	pcall(function()
+		game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "Hub", Text = tostring(t), Duration = 2
+		})
+	end)
+end
+
+-- Device spoof (Lunara: SetControls remote)
+local DEVICE_CFGS = {
+	Mobile = { Code = "Touch" },
+	Console = { Code = "Gamepad" },
+	VR = { Code = "VR" },
+	PC = { Code = "MouseKeyboard" },
+	Computer = { Code = "MouseKeyboard" },
+}
+local lastDeviceApply = 0
+local function getSetControlsRemote()
+	local remotes = RS:FindFirstChild("Remotes")
+	remotes = remotes and remotes:FindFirstChild("Replication")
+	remotes = remotes and remotes:FindFirstChild("Fighter")
+	return remotes and remotes:FindFirstChild("SetControls")
+end
+
+local function fireControls(code)
+	local sc = getSetControlsRemote()
+	if not sc then return false end
+	local ok = pcall(function()
+		sc:FireServer(code)
+	end)
+	return ok
+end
+
+local function realDeviceCode()
+	local it = UIS:GetLastInputType()
+	if it == Enum.UserInputType.Touch then
+		return "Touch"
+	elseif it == Enum.UserInputType.Gamepad1 or it == Enum.UserInputType.Gamepad2 then
+		return "Gamepad"
+	elseif it == Enum.UserInputType.Focus then -- unlikely
+		return "MouseKeyboard"
+	else
+		-- mobile executors often still report mouse; prefer Touch if TouchEnabled
+		if UIS.TouchEnabled and not UIS.KeyboardEnabled then
+			return "Touch"
+		end
+		return "MouseKeyboard"
+	end
+end
+
+function applyDeviceSpoof(force)
+	-- ONLY when enabled
+	if not S.DeviceSpoof then
+		return
+	end
+	local now = tick()
+	if not force and now - lastDeviceApply < 0.5 then
+		return
+	end
+	lastDeviceApply = now
+	local cfg = DEVICE_CFGS[S.DeviceName]
+	if not cfg then return end
+	for _ = 1, 3 do
+		if fireControls(cfg.Code) then
+			break
+		end
+		task.wait(0.2)
+	end
+end
+
+function restoreRealDevice()
+	-- call when spoof disabled so server gets real controls back
+	local code = realDeviceCode()
+	fireControls(code)
+	print("[hub] device restored:", code)
+end
+
+task.spawn(function()
+	task.wait(2)
+	if S.DeviceSpoof then applyDeviceSpoof(true) end
+	while true do
+		task.wait(10)
+		if S.DeviceSpoof then applyDeviceSpoof(false) end
+	end
+end)
+
+LP.CharacterAdded:Connect(function()
+	task.wait(1)
+	if S.DeviceSpoof then
+		task.wait(0.5)
+		applyDeviceSpoof(true)
+	end
+end)
+
+-- Lunara Unlock All (exact remote they use)
+local unlockAllExecuted = false
+function runLunaraUnlockAll()
+	if unlockAllExecuted then
+		notify("Unlock All already on")
+		return
+	end
+	unlockAllExecuted = true
+	task.spawn(function()
+		local ok, err = pcall(function()
+			-- same source as Lunara hub Misc > Unlock All
+			loadstring(game:HttpGet("https://pastefy.app/6ElsMLeb/raw", true))()
+		end)
+		if ok then
+			notify("Lunara Unlock All on")
+			print("[hub] Lunara Unlock All loaded")
+		else
+			unlockAllExecuted = false
+			S.UnlockAll = false
+			warn("[hub] Unlock All fail:", err)
+			notify("Unlock All fail")
+		end
+	end)
+end
+
+
+-- ========== AC (Lunara full) ==========
+-- setmetatable kv trap (MiscellaneousController)
+pcall(function()
+	local _stbl
+	_stbl = hookfunction(getrenv().setmetatable, newcclosure(function(tbl, mt)
+		if mt and typeof(mt) == "table" and rawget(mt, "__mode") == "kv" then
+			local tr = debug.traceback()
+			if tr:find("MiscellaneousController") or tr:find("LocalScript3") then
+				return _stbl({1, 2, 3}, {})
+			end
+		end
+		return _stbl(tbl, mt)
+	end))
+end)
+
+-- disable anticheat-named scripts + network client junk
+task.spawn(function()
+	pcall(function()
+		local tags = {"anticheat", "ac", "detection", "ban", "kick", "security", "moderation"}
+		local function proc(o)
+			pcall(function()
+				if o:IsA("LocalScript") or o:IsA("ModuleScript") then
+					local ok, nm = pcall(function() return string.lower(o.Name) end)
+					if not ok or not nm then return end
+					for i = 1, #tags do
+						if string.find(nm, tags[i], 1, true) then
+							pcall(function() o.Disabled = true end)
+							break
+						end
+					end
+				end
+			end)
+		end
+		pcall(function()
+			local desc = game:GetDescendants()
+			for i = 1, #desc do
+				if i % 400 == 0 then task.wait() end
+				proc(desc[i])
+			end
+		end)
+		pcall(function()
+			game.DescendantAdded:Connect(proc)
+		end)
+	end)
+	pcall(function()
+		local nc = game:GetService("NetworkClient")
+		if not nc then return end
+		nc.ChildAdded:Connect(function(ch)
+			pcall(function()
+				local ok, n = pcall(function() return string.lower(ch.Name) end)
+				if ok and n then
+					if string.find(n, "anticheat") or string.find(n, "detection") then
+						pcall(function() ch:Destroy() end)
+					end
+				end
+			end)
+		end)
+	end)
+end)
+
+-- ClientAlert fake + kick block
+pcall(function()
+	local fake = Instance.new("RemoteEvent")
+	fake.Name = "ClientAlert"
+	fake.Parent = LP
+
+	local pmt = getrawmetatable(LP)
+	if pmt then
+		local oldnc = pmt.__namecall
+		setreadonly(pmt, false)
+		pmt.__namecall = newcclosure(function(self, ...)
+			if getnamecallmethod() == "WaitForChild" and select(1, ...) == "ClientAlert" then
+				return fake
+			end
+			return oldnc(self, ...)
+		end)
+		setreadonly(pmt, true)
+	end
+
+	local mt = getrawmetatable(game)
+	if mt then
+		local old = mt.__namecall
+		setreadonly(mt, false)
+		mt.__namecall = newcclosure(function(self, ...)
+			local m = getnamecallmethod()
+			if self == LP and (m == "Kick" or m == "kick") then
+				return
+			end
+			if type(m) == "string" then
+				local ml = string.lower(m)
+				if string.find(ml, "kick") or m == "Shutdown" then
+					return
+				end
+			end
+			if m == "FireServer" and self == fake then
+				return
+			end
+			return old(self, ...)
+		end)
+		setreadonly(mt, true)
+	end
+	print("bypass started")
+end)
+
+-- neuter LocalScript3 / LoadingScreen ban functions (Lunara getgc)
+task.spawn(function()
+	task.wait(0.5)
+	pcall(function()
+		local rf = game:GetService("ReplicatedFirst")
+		local tgt = rf:FindFirstChild("LocalScript3") or rf:WaitForChild("LocalScript3", 10)
+		local ct = 0
+		local gc = getgc(false)
+		for i = 1, #gc do
+			if i % 300 == 0 then task.wait() end
+			local fn = gc[i]
+			if type(fn) == "function" then
+				local ok1, env = pcall(getfenv, fn)
+				if ok1 and type(env) == "table" then
+					local ok2, scr = pcall(function()
+						return rawget(env, "script")
+					end)
+					if ok2 and scr and typeof(scr) == "Instance" then
+						local ok3, ss = pcall(tostring, scr)
+						if ok3 and (scr == tgt or (type(ss) == "string" and string.find(ss, "LoadingScreen"))) then
+							local ok4, consts = pcall(debug.getconstants, fn)
+							if ok4 and type(consts) == "table" then
+								for j = 1, #consts do
+									local c = consts[j]
+									if type(c) == "string" and (string.find(c, "TakeTheL") or string.find(c, "ban") or string.find(c, "kick")) then
+										pcall(function()
+											hookfunction(fn, function() end)
+											ct = ct + 1
+										end)
+										break
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		print("[hub] AC neutered:", ct)
+	end)
+end)
+
+
+-- ========== Modules ==========
+local function sreq(inst)
+	if not inst then return nil end
+	local ok, m = pcall(require, inst)
+	if ok then return m end
+	return nil
+end
+
+local Utility, EnumLibrary, FC, GunModule, UseItem
+
+local function refreshMods()
+	local mod = RS:FindFirstChild("Modules")
+	Utility = Utility or sreq(mod and mod:FindFirstChild("Utility"))
+	EnumLibrary = EnumLibrary or sreq(mod and mod:FindFirstChild("EnumLibrary"))
+	local ps = LP:FindFirstChild("PlayerScripts")
+	local ctr = ps and ps:FindFirstChild("Controllers")
+	FC = FC or sreq(ctr and ctr:FindFirstChild("FighterController"))
+	local it = ps and ps:FindFirstChild("Modules")
+	it = it and it:FindFirstChild("ItemTypes")
+	GunModule = GunModule or sreq(it and it:FindFirstChild("Gun"))
+	local r = RS:FindFirstChild("Remotes")
+	r = r and r:FindFirstChild("Replication")
+	r = r and r:FindFirstChild("Fighter")
+	UseItem = UseItem or (r and r:FindFirstChild("UseItem"))
+end
+refreshMods()
+task.spawn(function()
+	for _ = 1, 20 do
+		task.wait(0.5)
+		refreshMods()
+		if Utility and EnumLibrary and UseItem then break end
+	end
+	print("[hub] mods U", Utility ~= nil, "E", EnumLibrary ~= nil, "FC", FC ~= nil, "G", GunModule ~= nil, "UI", UseItem ~= nil)
+end)
+
+local controls
+pcall(function()
+	controls = require(LP.PlayerScripts:WaitForChild("PlayerModule", 5)):GetControls()
+end)
+
+local function getFighter()
+	refreshMods()
+	if not FC then return nil end
+	if FC.LocalFighter then return FC.LocalFighter end
+	if type(FC.GetFighter) == "function" then
+		local ok, f = pcall(FC.GetFighter, FC, LP)
+		if ok then return f end
+	end
+	return nil
+end
+
+local function getRootPart()
+	local lf = getFighter()
+	if lf and lf.Entity and lf.Entity.RootPart then
+		return lf.Entity.RootPart
+	end
+	return LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+end
+
+local function getMoveWorld()
+	local cf = Cam.CFrame
+	local look = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
+	local right = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z)
+	if look.Magnitude > 0 then look = look.Unit end
+	if right.Magnitude > 0 then right = right.Unit end
+
+	if controls and controls.GetMoveVector then
+		local ok, mv = pcall(function() return controls:GetMoveVector() end)
+		if ok and typeof(mv) == "Vector3" and mv.Magnitude > 0.05 then
+			local dir = right * mv.X + look * mv.Z
+			if dir.Magnitude > 0.05 then return dir.Unit end
+		end
+	end
+
+	local m = Vector3.zero
+	if UIS:IsKeyDown(Enum.KeyCode.W) then m = m + look end
+	if UIS:IsKeyDown(Enum.KeyCode.S) then m = m - look end
+	if UIS:IsKeyDown(Enum.KeyCode.A) then m = m - right end
+	if UIS:IsKeyDown(Enum.KeyCode.D) then m = m + right end
+	if m.Magnitude > 0 then return m.Unit end
+
+	local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+	if hum and hum.MoveDirection.Magnitude > 0.05 then
+		local md = hum.MoveDirection
+		local flat = Vector3.new(md.X, 0, md.Z)
+		if flat.Magnitude > 0 then return flat.Unit end
+	end
+	return Vector3.zero
+end
+
+local function validEnemy(plr)
+	if plr == LP then return false end
+	local char = plr.Character
+	if not char then return false end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hum or not hrp or hum.Health <= 0 then return false end
+	if hrp:FindFirstChild("Attachment") then return false end
+	if S.TeamCheck then
+		local a, b = LP:GetAttribute("TeamID"), plr:GetAttribute("TeamID")
+		if a and b and a == b then return false end
+	end
+	return true
+end
+
+
+local function hasLOS(fromPos, toPos, targetChar)
+	if not S.WallCheck then return true end
+	local origin = fromPos
+	local dir = toPos - origin
+	local dist = dir.Magnitude
+	if dist < 1 then return true end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local filter = { LP.Character }
+	if targetChar then table.insert(filter, targetChar) end
+	params.FilterDescendantsInstances = filter
+	params.IgnoreWater = true
+	local result = Workspace:Raycast(origin, dir.Unit * dist, params)
+	if not result then return true end
+	-- hit something that is not the target
+	return false
+end
+
+local function getHead(plr)
+	local c = plr.Character
+	if not c then return nil end
+	return c:FindFirstChild("HitboxHead") or c:FindFirstChild("Head")
+end
+
+local function getNearest(ignoreWall)
+	local root = getRootPart()
+	if not root then return nil end
+	local best, bd = nil, math.huge
+	local from = root.Position
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if validEnemy(plr) then
+			local head = getHead(plr)
+			local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+			if head and hrp then
+				local okWall = ignoreWall or hasLOS(from, head.Position, plr.Character)
+				if okWall then
+					local d = (from - hrp.Position).Magnitude
+					if d < bd then
+						bd = d
+						best = head
+					end
+				end
+			end
+		end
+	end
+	return best
+end
+
+local function getCrosshair(fov)
+	local best, bd = nil, fov or 120
+	local center = Cam.ViewportSize / 2
+	local root = getRootPart()
+	local from = root and root.Position or Cam.CFrame.Position
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if validEnemy(plr) then
+			local head = getHead(plr)
+			if head then
+				local sp, on = Cam:WorldToViewportPoint(head.Position)
+				if on and sp.Z > 0 then
+					local dist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+					if dist < bd and hasLOS(from, head.Position, plr.Character) then
+						bd = dist
+						best = head
+					end
+				end
+			end
+		end
+	end
+	return best
+end
+
+
+local function getTarget(ignoreWall, fov)
+	local mode = S.TargetPriority or "Closest"
+	if mode == "Crosshair" then
+		return getCrosshair(fov or S.AimFOV or 300) or getNearest(ignoreWall)
+	elseif mode == "LowHP" then
+		local root = getRootPart()
+		if not root then return nil end
+		local best, bestHp = nil, math.huge
+		local from = root.Position
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if validEnemy(plr) then
+				local head = getHead(plr)
+				local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+				if head and hum then
+					local okWall = ignoreWall or hasLOS(from, head.Position, plr.Character)
+					if okWall and hum.Health < bestHp then
+						bestHp = hum.Health
+						best = head
+					end
+				end
+			end
+		end
+		return best
+	end
+	return getNearest(ignoreWall)
+end
+
+local function encodeShot(from, to, head)
+	if not Utility then return nil end
+	local e = Utility:EncodeCFrame(CFrame.new(from, to))
+	return {
+		[utf8.char(1)] = {
+			[utf8.char(0)] = e,
+			[utf8.char(1)] = e,
+			[utf8.char(2)] = head,
+			[utf8.char(3)] = Utility:EncodeCFrame(CFrame.new(0.43, 0.25, 0.42)),
+		},
+	}
+end
+
+-- ========== RAGE / VOID (stable, don't touch when editing UI) ==========
+local csync = { active = false, realCF = nil, serverPos = nil }
+
+-- Visual NEVER stays at server shot pos. RenderStep always restores client CF.
+pcall(function()
+	RunService:BindToRenderStep("hub_csync", Enum.RenderPriority.Camera.Value - 1, function()
+		if not csync.realCF then return end
+		local root = getRootPart()
+		if not root then return end
+		-- always keep what you see at realCF while rage/csync running
+		if csync.active or S.Rage then
+			pcall(function()
+				root.CFrame = csync.realCF
+			end)
+		end
+	end)
+end)
+
+local function csyncCaptureVisual()
+	local root = getRootPart()
+	if root then
+		csync.realCF = root.CFrame
+	end
+end
+
+local function csyncBegin(pos)
+	local root = getRootPart()
+	if not root then return end
+	-- capture current visual BEFORE any snap (do not overwrite with under-target)
+	if not csync.realCF then
+		csync.realCF = root.CFrame
+	end
+	csync.serverPos = pos
+	csync.active = true
+	-- brief server-side snap only (visual restored same frame by RenderStep)
+	pcall(function()
+		root.CFrame = CFrame.new(pos)
+		root.AssemblyLinearVelocity = Vector3.zero
+	end)
+end
+
+local function csyncEnd()
+	local root = getRootPart()
+	if root and csync.realCF then
+		pcall(function()
+			root.CFrame = csync.realCF
+			root.AssemblyLinearVelocity = Vector3.zero
+		end)
+	end
+	csync.active = false
+	csync.serverPos = nil
+	-- keep realCF while Rage on so next shot still has visual anchor
+	if not S.Rage then
+		csync.realCF = nil
+	end
+end
+
+local function rageFire(head)
+	if not head then return false end
+	refreshMods()
+	if not (Utility and EnumLibrary and UseItem) then return false end
+
+	local lf = getFighter()
+	if not lf or not lf.EquippedItem then return false end
+
+	local ok, oid = pcall(function()
+		return lf.EquippedItem:Get("ObjectID")
+	end)
+	local okE, se = pcall(function()
+		return EnumLibrary:ToEnum("StartShooting")
+	end)
+	if not (ok and oid and okE and se) then return false end
+
+	-- always prefer HitboxHead for registration
+	if head.Parent then
+		local hh = head.Parent:FindFirstChild("HitboxHead") or head.Parent:FindFirstChild("Head")
+		if hh then head = hh end
+	end
+	local pos = head.Position
+
+	csyncCaptureVisual()
+	-- very close under head + slight forward into head for register
+	local under = pos + Vector3.new(0, -1.8, 0)
+	csyncBegin(under)
+	local from = under
+	-- aim point slightly inside head
+	local aimPos = pos + Vector3.new(0, 0.15, 0)
+
+	local data = encodeShot(from, aimPos, head)
+	if not data then
+		csyncEnd()
+		return false
+	end
+
+	local fired = false
+	for _ = 1, 8 do
+		local okF = pcall(function()
+			UseItem:FireServer(oid, se, data, nil)
+		end)
+		if okF then fired = true end
+	end
+
+	task.delay(0.03, function()
+		csyncEnd()
+	end)
+	return fired
+end
+
+-- Silent aim / trigger redirect on real shots
+task.spawn(function()
+	for _ = 1, 15 do
+		refreshMods()
+		if GunModule and GunModule.StartShooting then break end
+		task.wait(0.4)
+	end
+	if not (GunModule and GunModule.StartShooting) then
+		warn("[hub] gun hook failed")
+		return
+	end
+	local old = GunModule.StartShooting
+	GunModule.StartShooting = function(self, ...)
+		local a, b, c, d, e = old(self, ...)
+		if not S.Rage and not S.Triggerbot and not S.SilentAim then
+			return a, b, c, d, e
+		end
+		local isLocal = false
+		pcall(function()
+			local cf = self.ClientFighter
+			if cf then
+				if cf.IsLocalPlayer then
+					isLocal = true
+				elseif cf.Player == LP then
+					isLocal = true
+				end
+			end
+		end)
+		if not isLocal or type(c) ~= "table" then
+			return a, b, c, d, e
+		end
+		local head
+		if S.Rage then
+			head = getNearest(true)
+		elseif S.SilentAim then
+			head = getTarget(false, S.AimFOV or 300)
+		else
+			head = getCrosshair(S.TrigFOV or 120)
+		end
+		if head and Utility then
+			local pos = head.Position
+			local root = getRootPart()
+			local from = root and root.Position or Cam.CFrame.Position
+			if S.Rage then
+				from = pos + Vector3.new(0, -5, 0)
+			end
+			pcall(function()
+				local data = encodeShot(from, pos, head)
+				if data then
+					c[utf8.char(1)] = data[utf8.char(1)]
+					c[utf8.char(0)] = data[utf8.char(1)][utf8.char(0)]
+					c[utf8.char(2)] = head
+				end
+			end)
+			d = true
+		end
+		return a, b, c, d, e
+	end
+	print("[hub] gun hooked")
+end)
+
+-- Aimbot: hard lock onto enemy HEAD (team + wall check kept)
+pcall(function()
+	RunService:UnbindFromRenderStep("hub_aimbot")
+end)
+RunService:BindToRenderStep("hub_aimbot", Enum.RenderPriority.Camera.Value + 1, function()
+	if not S.Aimbot then return end
+	-- wall/team via getCrosshair / getNearest (hasLOS + validEnemy)
+	local head = getTarget(false, S.AimFOV or 300)
+	if not head or not head.Parent then return end
+	-- prefer actual Head / HitboxHead part
+	local target = head
+	local char = head.Parent
+	if char then
+		local h = char:FindFirstChild("HitboxHead") or char:FindFirstChild("Head")
+		if h then target = h end
+	end
+	local cam = Workspace.CurrentCamera
+	if not cam then return end
+	-- exact snap (no lerp) Ã¢â‚¬â€ crosshair on head
+	cam.CFrame = CFrame.lookAt(cam.CFrame.Position, target.Position)
+end)
+
+
+-- Silent Aim (Lunara: UseItem while shoot held, no camera move)
+local lastSilent = 0
+RunService.Heartbeat:Connect(function()
+	if not S.SilentAim then return end
+	if S.Rage then return end
+	local holding = false
+	pcall(function()
+		holding = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+			or UIS:IsKeyDown(Enum.KeyCode.ButtonR2)
+	end)
+	if not holding then return end
+	if tick() - lastSilent < 0.05 then return end
+	local head = getTarget(false, S.AimFOV or 300)
+	if not head then return end
+	local char = head.Parent
+	if char then
+		local h = char:FindFirstChild("HitboxHead") or char:FindFirstChild("Head")
+		if h then head = h end
+	end
+	refreshMods()
+	if not (Utility and EnumLibrary and UseItem) then return end
+	local lf = getFighter()
+	if not lf or not lf.EquippedItem then return end
+	local ok, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
+	local okE, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
+	if not (ok and oid and okE and se) then return end
+	local root = getRootPart()
+	local from = root and root.Position or Cam.CFrame.Position
+	local data = encodeShot(from, head.Position, head)
+	if data then
+		pcall(function() UseItem:FireServer(oid, se, data, nil) end)
+		lastSilent = tick()
+	end
+end)
+
+-- Triggerbot: shoot when target near crosshair
+local lastTrig = 0
+RunService.Heartbeat:Connect(function()
+	if not S.Triggerbot or S.Rage then return end
+	if tick() - lastTrig < 0.1 then return end
+	local lf = getFighter()
+	if not lf or not lf.EquippedItem then return end
+	local head = getCrosshair(math.max(S.TrigFOV or 120, 80))
+	if not head then return end
+	refreshMods()
+	if not (Utility and EnumLibrary and UseItem) then return end
+	local ok, oid = pcall(function() return lf.EquippedItem:Get("ObjectID") end)
+	local okE, se = pcall(function() return EnumLibrary:ToEnum("StartShooting") end)
+	if not (ok and oid and okE and se) then return end
+	local root = getRootPart()
+	local from = root and root.Position or Cam.CFrame.Position
+	local data = encodeShot(from, head.Position, head)
+	if data then
+		pcall(function() UseItem:FireServer(oid, se, data, nil) end)
+		lastTrig = tick()
+	end
+end)
+
+-- Ragebot loop
+local lastRage = 0
+RunService.Heartbeat:Connect(function()
+	if not S.Rage then
+		if csync.active then csyncEnd() end
+		csync.realCF = nil
+		return
+	end
+	-- refresh visual anchor when not mid-shot
+	if not csync.active then
+		csyncCaptureVisual()
+	end
+	if tick() - lastRage < (S.RageInterval or 0.03) then return end
+	local lf = getFighter()
+	if not lf or not lf.EquippedItem then return end
+	local head = getNearest(true) -- rage: no wall check
+	if not head then return end
+	if head.Parent then
+		local hh = head.Parent:FindFirstChild("HitboxHead") or head.Parent:FindFirstChild("Head")
+		if hh then head = hh end
+	end
+	if rageFire(head) then
+		lastRage = tick()
+	end
+end)
+
+
+
+-- Void Spam: continuous far safe teleport (not onto enemy)
+local farVoidConn = nil
+local farVoidSaved = nil
+local function stopFarVoid()
+	if farVoidConn then
+		farVoidConn:Disconnect()
+		farVoidConn = nil
+	end
+	local root = getRootPart()
+	if root and farVoidSaved then
+		pcall(function()
+			root.CFrame = farVoidSaved
+			root.AssemblyLinearVelocity = Vector3.zero
+		end)
+	end
+	farVoidSaved = nil
+end
+
+local function startFarVoid()
+	stopFarVoid()
+	local root = getRootPart()
+	if root then
+		farVoidSaved = root.CFrame
+	end
+	farVoidConn = RunService.Heartbeat:Connect(function()
+		if not S.VoidSpam then
+			stopFarVoid()
+			return
+		end
+		-- if rage is actively shooting, don't fight rage csync every frame
+		if S.Rage and csync.active then
+			return
+		end
+		local root2 = getRootPart()
+		if not root2 then return end
+		if not farVoidSaved then
+			farVoidSaved = root2.CFrame
+		end
+		-- very far, high enough Y so you don't die (void kill is usually low Y)
+		local p = Vector3.new(
+			math.random(-25000, 25000),
+			5000 + math.random(0, 2000),
+			math.random(-25000, 25000)
+		)
+		pcall(function()
+			root2.CFrame = CFrame.new(p)
+			root2.AssemblyLinearVelocity = Vector3.zero
+		end)
+	end)
+	-- visual restore each frame so you don't see void (client view)
+	RunService:BindToRenderStep("hub_farvoid_vis", Enum.RenderPriority.Camera.Value, function()
+		if not S.VoidSpam or not farVoidSaved then return end
+		if S.Rage and csync.active then return end
+		local root2 = getRootPart()
+		if root2 then
+			pcall(function()
+				root2.CFrame = farVoidSaved
+			end)
+		end
+	end)
+end
+
+task.spawn(function()
+	local was = false
+	while true do
+		task.wait(0.2)
+		if S.VoidSpam and not was then
+			startFarVoid()
+		elseif (not S.VoidSpam) and was then
+			stopFarVoid()
+			pcall(function()
+				RunService:UnbindFromRenderStep("hub_farvoid_vis")
+			end)
+		end
+		was = S.VoidSpam
+	end
+end)
+
+-- Rapid Fire (auto + semi pistol/shotgun + melee)
+local function forceZeroInfo(info)
+	if type(info) ~= "table" then return end
+	for k, v in pairs(info) do
+		if type(v) == "number" then
+			local lk = string.lower(tostring(k))
+			if string.find(lk, "cool") or string.find(lk, "delay") or string.find(lk, "rate")
+				or string.find(lk, "interval") or string.find(lk, "ready") or string.find(lk, "wait")
+				or string.find(lk, "shoot") or string.find(lk, "attack") or string.find(lk, "swing")
+				or string.find(lk, "fire") or string.find(lk, "shot") then
+				info[k] = 0
+			end
+		end
+	end
+	-- explicit
+	for _, k in ipairs({
+		"ShootCooldown", "ShotCooldown", "FireCooldown", "FireRate", "Cooldown",
+		"AttackCooldown", "SwingCooldown", "HitCooldown", "DelayBetweenShots",
+		"TimeBetweenShots", "MinShootInterval", "NextShotTime",
+	}) do
+		if type(info[k]) == "number" then
+			info[k] = 0
+		end
+	end
+end
+
+task.spawn(function()
+	for _ = 1, 25 do
+		refreshMods()
+		if GunModule and GunModule.StartShooting then break end
+		task.wait(0.25)
+	end
+
+	if GunModule and GunModule.StartShooting then
+		local prev = GunModule.StartShooting
+		GunModule.StartShooting = function(self, ...)
+			if S.RapidFire then
+				pcall(function()
+					if self.Info then forceZeroInfo(self.Info) end
+				end)
+			end
+			local results = { prev(self, ...) }
+			-- do NOT restore cooldowns while RapidFire (semi-auto needs them stuck at 0)
+			if S.RapidFire then
+				pcall(function()
+					if self.Info then forceZeroInfo(self.Info) end
+				end)
+			end
+			return unpack(results)
+		end
+		print("[hub] rapid fire gun ok")
+	end
+
+	local MeleeModule
+	pcall(function()
+		MeleeModule = require(LP.PlayerScripts.Modules.ItemTypes.Melee)
+	end)
+	if MeleeModule and MeleeModule.StartShooting then
+		local prevM = MeleeModule.StartShooting
+		MeleeModule.StartShooting = function(self, ...)
+			if S.RapidFire then
+				pcall(function()
+					if self.Info then forceZeroInfo(self.Info) end
+				end)
+			end
+			local results = { prevM(self, ...) }
+			if S.RapidFire then
+				pcall(function()
+					if self.Info then forceZeroInfo(self.Info) end
+				end)
+			end
+			return unpack(results)
+		end
+		print("[hub] rapid melee ok")
+	end
+end)
+
+-- continuous zero cooldowns only (NO auto-shoot â€” wall/team safe)
+RunService.Heartbeat:Connect(function()
+	if not S.RapidFire then return end
+	local lf = getFighter()
+	if not lf or not lf.EquippedItem then return end
+	pcall(function()
+		local item = lf.EquippedItem
+		if item.Info then forceZeroInfo(item.Info) end
+		for _, k in ipairs({"ShootCooldown", "AttackCooldown", "LastShoot", "LastAttack", "NextShot"}) do
+			if type(item[k]) == "number" then item[k] = 0 end
+		end
+	end)
+	-- do NOT auto FireServer here (was shooting through walls)
+end)
+
+-- WalkSpeed (Lunara Velocity: AssemblyLinearVelocity * moveDir)
+RunService.Heartbeat:Connect(function()
+	if not S.WalkSpeed then return end
+	local char = LP.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not hum then return end
+	local moveDir = hum.MoveDirection
+	if moveDir.Magnitude > 0.05 then
+		local spd = S.WalkSpeedValue or 45
+		hrp.AssemblyLinearVelocity = Vector3.new(
+			moveDir.X * spd,
+			hrp.AssemblyLinearVelocity.Y,
+			moveDir.Z * spd
+		)
+	end
+end)
+
+-- ESP (Drawing API boxes + Highlight chams fallback)
+local hasDrawing = (typeof(Drawing) == "table" and Drawing.new) or (type(Drawing) == "table")
+local espDrawings = {} -- [player] = {box, boxOut, name, hpBg, hpFill, dist}
+
+local function espClearPlr(plr)
+	local t = espDrawings[plr]
+	if t then
+		for _, o in pairs(t) do
+			pcall(function()
+				if o.Remove then o:Remove() elseif o.Destroy then o:Destroy() end
+			end)
+		end
+		espDrawings[plr] = nil
+	end
+	pcall(function()
+		local char = plr.Character
+		if char then
+			local h = char:FindFirstChild("HubChams")
+			if h then h:Destroy() end
+		end
+	end)
+end
+
+local function espMakeDrawing(plr)
+	if not hasDrawing then return nil end
+	local t = {}
+	local function sq(thick, col)
+		local s = Drawing.new("Square")
+		s.Visible = false
+		s.Filled = false
+		s.Thickness = thick
+		s.Color = col
+		s.Transparency = 1
+		return s
+	end
+	local function tx(size, col)
+		local t2 = Drawing.new("Text")
+		t2.Visible = false
+		t2.Size = size
+		t2.Color = col
+		t2.Center = true
+		t2.Outline = true
+		t2.OutlineColor = Color3.new(0, 0, 0)
+		t2.Font = 2
+		return t2
+	end
+	local function ln(thick, col)
+		local l = Drawing.new("Line")
+		l.Visible = false
+		l.Thickness = thick
+		l.Color = col
+		l.Transparency = 1
+		return l
+	end
+	t.boxOut = sq(4, Color3.new(0, 0, 0))
+	t.box = sq(2, Color3.fromRGB(255, 255, 255))
+	t.name = tx(14, Color3.fromRGB(255, 255, 255))
+	t.dist = tx(12, Color3.fromRGB(200, 200, 210))
+	t.hpOut = ln(4, Color3.new(0, 0, 0))
+	t.hp = ln(2, Color3.fromRGB(0, 255, 100))
+	espDrawings[plr] = t
+	return t
+end
+
+local function getEspFolder()
+	local parent = nil
+	pcall(function()
+		parent = gethui and gethui() or game:GetService("CoreGui")
+	end)
+	if not parent then
+		parent = LP:FindFirstChild("PlayerGui") or LP:WaitForChild("PlayerGui", 5)
+	end
+	local f = parent and parent:FindFirstChild("HubESP")
+	if f then return f end
+	f = Instance.new("Folder")
+	f.Name = "HubESP"
+	f.Parent = parent
+	return f
+end
+
+-- Drawing ESP render (clean 2D box + HP + name)
+RunService.RenderStepped:Connect(function()
+	if not S.ESP then
+		for plr, _ in pairs(espDrawings) do
+			espClearPlr(plr)
+		end
+		return
+	end
+	if not hasDrawing then return end
+	local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	local seen = {}
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if validEnemy(plr) then
+			seen[plr] = true
+			local char = plr.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			local head = char and (char:FindFirstChild("Head") or char:FindFirstChild("HitboxHead"))
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if hrp and hum and hum.Health > 0 then
+				local t = espDrawings[plr] or espMakeDrawing(plr)
+				if t then
+				local top = head and head.Position or (hrp.Position + Vector3.new(0, 3.2, 0))
+				local bot = hrp.Position - Vector3.new(0, 3.6, 0)
+				local spT, onT = Cam:WorldToViewportPoint(top + Vector3.new(0, 0.4, 0))
+				local spB, onB = Cam:WorldToViewportPoint(bot)
+				if onT and onB and spT.Z > 0 then
+					local h = math.abs(spB.Y - spT.Y)
+					local w = h * 0.72
+					local x = spT.X - w / 2
+					local y = spT.Y
+					if S.ESP_Box then
+						t.boxOut.Size = Vector2.new(w, h)
+						t.boxOut.Position = Vector2.new(x, y)
+						t.boxOut.Visible = true
+						t.box.Size = Vector2.new(w, h)
+						t.box.Position = Vector2.new(x, y)
+						t.box.Color = Color3.fromRGB(255, 255, 255)
+						t.box.Visible = true
+					else
+						t.box.Visible = false
+						t.boxOut.Visible = false
+					end
+					if S.ESP_HealthBar then
+						local ratio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+						local bx = x - 6
+						t.hpOut.From = Vector2.new(bx, y)
+						t.hpOut.To = Vector2.new(bx, y + h)
+						t.hpOut.Visible = true
+						t.hp.From = Vector2.new(bx, y + h * (1 - ratio))
+						t.hp.To = Vector2.new(bx, y + h)
+						t.hp.Color = Color3.fromRGB(0, 255, 100)
+						t.hp.Visible = true
+					else
+						t.hp.Visible = false
+						t.hpOut.Visible = false
+					end
+					if S.ESP_Name then
+						t.name.Text = plr.DisplayName or plr.Name
+						t.name.Position = Vector2.new(spT.X, y - 16)
+						t.name.Visible = true
+					else
+						t.name.Visible = false
+					end
+					if S.ESP_Distance and myRoot then
+						local d = math.floor((myRoot.Position - hrp.Position).Magnitude)
+						t.dist.Text = d .. "m"
+						t.dist.Position = Vector2.new(spT.X, y + h + 2)
+						t.dist.Visible = true
+					else
+						t.dist.Visible = false
+					end
+
+					if S.ESP_Skeleton then
+						-- larger skeleton via extra vertical/horizontal mid lines
+						if not t.skel1 then
+							t.skel1 = Drawing.new("Line"); t.skel1.Thickness = 2; t.skel1.Color = Color3.fromRGB(255,255,255)
+							t.skel2 = Drawing.new("Line"); t.skel2.Thickness = 2; t.skel2.Color = Color3.fromRGB(255,255,255)
+							t.skel3 = Drawing.new("Line"); t.skel3.Thickness = 2; t.skel3.Color = Color3.fromRGB(255,255,255)
+						end
+						local mx = x + w/2
+						local my = y + h * 0.35
+						t.skel1.From = Vector2.new(mx, y + 4); t.skel1.To = Vector2.new(mx, y + h * 0.55); t.skel1.Visible = true
+						t.skel2.From = Vector2.new(x + 4, my); t.skel2.To = Vector2.new(x + w - 4, my); t.skel2.Visible = true
+						t.skel3.From = Vector2.new(mx, y + h * 0.55); t.skel3.To = Vector2.new(mx, y + h - 2); t.skel3.Visible = true
+					elseif t.skel1 then
+						t.skel1.Visible = false; t.skel2.Visible = false; t.skel3.Visible = false
+					end
+
+					-- chams
+					if not char:FindFirstChild("HubChams") then
+						local hl = Instance.new("Highlight")
+						hl.Name = "HubChams"
+						hl.FillColor = Color3.fromRGB(140, 100, 255)
+						hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+						hl.FillTransparency = 0.65
+						hl.OutlineTransparency = 0
+						hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+						hl.Adornee = char
+						hl.Parent = char
+					end
+				else
+					for _, o in pairs(t) do o.Visible = false end
+				end
+				end -- if t
+			else
+				espClearPlr(plr)
+			end
+		end
+	end
+	for plr, _ in pairs(espDrawings) do
+		if not seen[plr] then espClearPlr(plr) end
+	end
+end)
+
+-- Fallback ESP (no Drawing): Highlight + clean Billboard
+task.spawn(function()
+	while true do
+		task.wait(0.3)
+		if hasDrawing then
+			-- drawing path handles it
+		else
+			pcall(function()
+				local espFolder = getEspFolder()
+				for _, c in ipairs(espFolder:GetChildren()) do c:Destroy() end
+				if not S.ESP then return end
+				local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+				for _, plr in ipairs(Players:GetPlayers()) do
+					if validEnemy(plr) then
+						local char = plr.Character
+						local hrp = char and char:FindFirstChild("HumanoidRootPart")
+						local head = char and char:FindFirstChild("Head")
+						local hum = char and char:FindFirstChildOfClass("Humanoid")
+						if hrp and hum and hum.Health > 0 then
+							if not char:FindFirstChild("HubChams") then
+								local hl = Instance.new("Highlight")
+								hl.Name = "HubChams"
+								hl.FillColor = Color3.fromRGB(140, 100, 255)
+								hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+								hl.FillTransparency = 0.6
+								hl.OutlineTransparency = 0
+								hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+								hl.Adornee = char
+								hl.Parent = char
+							end
+							if S.ESP_Name or S.ESP_HealthBar or S.ESP_Distance then
+								local bb = Instance.new("BillboardGui")
+								bb.Size = UDim2.new(0, 100, 0, 40)
+								bb.StudsOffset = Vector3.new(0, 3.2, 0)
+								bb.AlwaysOnTop = true
+								bb.Adornee = head or hrp
+								bb.Parent = espFolder
+								local lay = Instance.new("UIListLayout")
+								lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+								lay.Parent = bb
+								if S.ESP_Name then
+									local n = Instance.new("TextLabel")
+									n.Size = UDim2.new(1, 0, 0, 14)
+									n.BackgroundTransparency = 1
+									n.Text = plr.DisplayName or plr.Name
+									n.TextColor3 = Color3.new(1, 1, 1)
+									n.TextStrokeTransparency = 0.3
+									n.Font = Enum.Font.GothamBold
+									n.TextSize = 13
+									n.Parent = bb
+								end
+								if S.ESP_HealthBar then
+									local ratio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+									local hold = Instance.new("Frame")
+									hold.Size = UDim2.new(0, 4, 0, 32)
+									hold.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+									hold.BorderSizePixel = 0
+									hold.Parent = bb
+									local fill = Instance.new("Frame")
+									fill.AnchorPoint = Vector2.new(0, 1)
+									fill.Position = UDim2.new(0, 0, 1, 0)
+									fill.Size = UDim2.new(1, 0, ratio, 0)
+									fill.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+									fill.BorderSizePixel = 0
+									fill.Parent = hold
+								end
+								if S.ESP_Distance and myRoot then
+									local d = math.floor((myRoot.Position - hrp.Position).Magnitude)
+									local dl = Instance.new("TextLabel")
+									dl.Size = UDim2.new(1, 0, 0, 12)
+									dl.BackgroundTransparency = 1
+									dl.Text = d .. "m"
+									dl.TextColor3 = Color3.fromRGB(200, 200, 210)
+									dl.TextStrokeTransparency = 0.4
+									dl.Font = Enum.Font.Gotham
+									dl.TextSize = 11
+									dl.Parent = bb
+								end
+							end
+						end
+					end
+				end
+			end)
+		end
+	end
+end)
+
+-- Spoofs
+-- Level + WinStreak (Lunara path)
+task.spawn(function()
+	while true do
+		task.wait(0.4)
+		if S.LevelSpoof then
+			pcall(function()
+				LP:SetAttribute("Level", S.Level)
+			end)
+		end
+		if S.WinStreakSpoof then
+			pcall(function()
+				local ls = LP:FindFirstChild("CustomLeaderstats")
+				if ls then
+					local ws = ls:FindFirstChild("Win Streak") or ls:FindFirstChild("WinStreak")
+					if ws then
+						ws.Value = S.WinStreak
+					end
+				end
+				LP:SetAttribute("WinStreak", S.WinStreak)
+			end)
+		end
+	end
+end)
+
+-- Noclip
+RunService.Stepped:Connect(function()
+	if not S.Noclip then return end
+	local char = LP.Character
+	if not char then return end
+	for _, p in ipairs(char:GetDescendants()) do
+		if p:IsA("BasePart") then
+			p.CanCollide = false
+		end
+	end
+end)
+
+-- Fly (Lunara-style BodyVelocity + BodyGyro)
+local flyConn = nil
+local flyBV = nil
+local flyBG = nil
+
+local function cleanupFly()
+	if flyConn then
+		flyConn:Disconnect()
+		flyConn = nil
+	end
+	if flyBV then
+		pcall(function() flyBV:Destroy() end)
+		flyBV = nil
+	end
+	if flyBG then
+		pcall(function() flyBG:Destroy() end)
+		flyBG = nil
+	end
+	local char = LP.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if hrp then
+		pcall(function()
+			hrp.AssemblyLinearVelocity = Vector3.zero
+		end)
+	end
+	if hum then
+		pcall(function()
+			hum.PlatformStand = false
+			hum:ChangeState(Enum.HumanoidStateType.Running)
+		end)
+	end
+end
+
+local function startFly()
+	cleanupFly()
+	local char = LP.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not hum then return end
+
+	flyBV = Instance.new("BodyVelocity")
+	flyBV.Name = "HubFly"
+	flyBV.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+	flyBV.Velocity = Vector3.zero
+	flyBV.Parent = hrp
+
+	flyBG = Instance.new("BodyGyro")
+	flyBG.Name = "HubFlyGyro"
+	flyBG.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+	flyBG.P = 1000
+	flyBG.Parent = hrp
+
+	pcall(function()
+		hum:ChangeState(Enum.HumanoidStateType.PlatformStanding)
+	end)
+
+	flyConn = RunService.Heartbeat:Connect(function()
+		if not S.Fly then
+			cleanupFly()
+			return
+		end
+		local char2 = LP.Character
+		if not char2 or not char2.Parent then
+			cleanupFly()
+			return
+		end
+		local hrp2 = char2:FindFirstChild("HumanoidRootPart")
+		local hum2 = char2:FindFirstChildOfClass("Humanoid")
+		if not hrp2 or not hum2 then
+			cleanupFly()
+			return
+		end
+
+		-- recreate movers if lost (respawn / reset)
+		if not flyBV or flyBV.Parent ~= hrp2 then
+			if flyBV then pcall(function() flyBV:Destroy() end) end
+			flyBV = Instance.new("BodyVelocity")
+			flyBV.Name = "HubFly"
+			flyBV.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+			flyBV.Parent = hrp2
+		end
+		if not flyBG or flyBG.Parent ~= hrp2 then
+			if flyBG then pcall(function() flyBG:Destroy() end) end
+			flyBG = Instance.new("BodyGyro")
+			flyBG.Name = "HubFlyGyro"
+			flyBG.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+			flyBG.P = 1000
+			flyBG.Parent = hrp2
+		end
+
+		local cam = Workspace.CurrentCamera
+		local look = cam.CFrame.LookVector
+		local right = cam.CFrame.RightVector
+		local move = Vector3.zero
+
+		-- PC (Lunara exact)
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) or UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+			move = move - Vector3.new(0, 1, 0)
+		end
+
+		-- Mobile: camera-relative stick (stick up = look forward)
+		if move.Magnitude < 0.05 then
+			local mv = nil
+			if controls and controls.GetMoveVector then
+				local ok, v = pcall(function() return controls:GetMoveVector() end)
+				if ok then mv = v end
+			end
+			if typeof(mv) == "Vector3" and mv.Magnitude > 0.1 then
+				-- standard: -Z forward in camera space for control modules
+				move = (right * mv.X) + (look * -mv.Z)
+			end
+		end
+
+		if move.Magnitude > 0.1 then
+			flyBV.Velocity = move.Unit * S.FlySpeed
+		else
+			flyBV.Velocity = Vector3.zero
+		end
+		-- gyro follows full camera (Lunara)
+		flyBG.CFrame = cam.CFrame
+
+		if hum2:GetState() ~= Enum.HumanoidStateType.PlatformStanding then
+			pcall(function()
+				hum2:ChangeState(Enum.HumanoidStateType.PlatformStanding)
+			end)
+		end
+	end)
+end
+
+-- watch S.Fly toggles (polled lightly)
+task.spawn(function()
+	local was = false
+	while true do
+		task.wait(0.15)
+		if S.Fly and not was then
+			startFly()
+		elseif (not S.Fly) and was then
+			cleanupFly()
+		end
+		was = S.Fly
+	end
+end)
+
+LP.CharacterAdded:Connect(function()
+	if S.Fly then
+		task.wait(0.5)
+		if S.Fly then startFly() end
+	end
+end)
+
+
+-- FOV circle
+task.spawn(function()
+	local pg = LP:WaitForChild("PlayerGui", 10)
+	if not pg then return end
+	local sg = Instance.new("ScreenGui")
+	sg.Name = "HubFOV"
+	sg.ResetOnSpawn = false
+	sg.IgnoreGuiInset = true
+	sg.Parent = pg
+	local ring = Instance.new("Frame")
+	ring.AnchorPoint = Vector2.new(0.5, 0.5)
+	ring.Position = UDim2.fromScale(0.5, 0.5)
+	ring.BackgroundTransparency = 1
+	ring.Parent = sg
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(255, 255, 255)
+	stroke.Thickness = 1
+	stroke.Transparency = 0.3
+	stroke.Parent = ring
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = ring
+	RunService.RenderStepped:Connect(function()
+		if not S.ShowFOV then
+			ring.Visible = false
+			return
+		end
+		ring.Visible = true
+		local fov = S.Aimbot and (S.AimFOV or 300) or (S.TrigFOV or 120)
+		ring.Size = UDim2.fromOffset(fov * 2, fov * 2)
+	end)
+end)
+
+-- No Recoil / No Spread (Lunara style)
+task.spawn(function()
+	for _ = 1, 20 do
+		refreshMods()
+		if GunModule then break end
+		task.wait(0.3)
+	end
+	if GunModule and GunModule._Recoil then
+		local oldR = GunModule._Recoil
+		GunModule._Recoil = function(self, mult)
+			if S.NoRecoil then return end
+			return oldR(self, mult)
+		end
+		print("[hub] no recoil hooked")
+	end
+	pcall(function()
+		local GU = require(RS.Modules.GameplayUtility)
+		if GU and GU.GetSpread then
+			local oldS = GU.GetSpread
+			GU.GetSpread = function(...)
+				if S.NoSpread then
+					return CFrame.new()
+				end
+				return oldS(...)
+			end
+			print("[hub] no spread hooked")
+		end
+	end)
+end)
+
+-- Freecam
+local freecam = { cam = nil, conn = nil, pos = nil }
+function stopFreecam()
+	if freecam.conn then freecam.conn:Disconnect(); freecam.conn = nil end
+	pcall(function()
+		local cam = Workspace.CurrentCamera
+		if cam then cam.CameraType = Enum.CameraType.Custom end
+	end)
+	freecam.pos = nil
+end
+function startFreecam()
+	stopFreecam()
+	local cam = Workspace.CurrentCamera
+	freecam.pos = cam.CFrame
+	cam.CameraType = Enum.CameraType.Scriptable
+	freecam.conn = RunService.RenderStepped:Connect(function(dt)
+		if not S.Freecam then stopFreecam() return end
+		local cam2 = Workspace.CurrentCamera
+		cam2.CameraType = Enum.CameraType.Scriptable
+		local look = cam2.CFrame.LookVector
+		local right = cam2.CFrame.RightVector
+		local move = Vector3.zero
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move = move - Vector3.new(0, 1, 0) end
+		if controls and controls.GetMoveVector then
+			local ok, mv = pcall(function() return controls:GetMoveVector() end)
+			if ok and typeof(mv) == "Vector3" and mv.Magnitude > 0.05 then
+				move = move + right * mv.X + look * (-mv.Z)
+			end
+		end
+		if move.Magnitude > 0 then
+			freecam.pos = freecam.pos + move.Unit * (S.FreecamSpeed or 50) * dt
+		end
+		-- mouse look approx: keep scriptable at freecam.pos with current look from last cam
+		freecam.pos = CFrame.new(freecam.pos.Position, freecam.pos.Position + cam2.CFrame.LookVector)
+		cam2.CFrame = freecam.pos
+	end)
+end
+
+-- Config save/load (named)
+local CFG_FOLDER = "cutegirl_configs"
+function saveConfig(name)
+	name = tostring(name or "default"):gsub("[^%w_%-]", "")
+	if name == "" then name = "default" end
+	pcall(function()
+		if not writefile then
+			notify("writefile N/A")
+			return
+		end
+		if makefolder then pcall(makefolder, CFG_FOLDER) end
+		local HttpService = game:GetService("HttpService")
+		writefile(CFG_FOLDER .. "/" .. name .. ".json", HttpService:JSONEncode(S))
+		notify("Saved: " .. name)
+		pcall(function()
+			if getgenv()._HUB_REFRESH_CFG then getgenv()._HUB_REFRESH_CFG() end
+		end)
+	end)
+end
+function loadConfig(name)
+	name = tostring(name or "default"):gsub("[^%w_%-]", "")
+	if name == "" then name = "default" end
+	pcall(function()
+		local path = CFG_FOLDER .. "/" .. name .. ".json"
+		if not (readfile and isfile and isfile(path)) then
+			notify("No config: " .. name)
+			return
+		end
+		local HttpService = game:GetService("HttpService")
+		local data = HttpService:JSONDecode(readfile(path))
+		if type(data) == "table" then
+			for k, v in pairs(data) do
+				if S[k] ~= nil then S[k] = v end
+			end
+			notify("Loaded: " .. name)
+			pcall(function()
+				if getgenv()._HUB_REFRESH_CFG then getgenv()._HUB_REFRESH_CFG() end
+			end)
+		end
+	end)
+end
+function listConfigs()
+	pcall(function()
+		if not listfiles then
+			notify("listfiles N/A")
+			return
+		end
+		local files = listfiles(CFG_FOLDER)
+		local names = {}
+		for _, f in ipairs(files or {}) do
+			local n = tostring(f):match("([^/\\]+)%.json$")
+			if n then table.insert(names, n) end
+		end
+		if #names == 0 then
+			notify("No configs")
+		else
+			notify("Configs: " .. table.concat(names, ", "))
+			print("[hub] configs:", table.concat(names, ", "))
+		end
+	end)
+end
+-- no autoload
+
+
+
+
+
+-- ========== ADDONS ==========
+
+-- Auto Reload (fill CurrentAmmo when low / cancel reload)
+RunService.Heartbeat:Connect(function()
+	if not S.AutoReload then return end
+	pcall(function()
+		local lf = getFighter and getFighter() or nil
+		if not lf or not lf.EquippedItem then return end
+		local item = lf.EquippedItem
+		local maxAmmo = item:Get("MaxAmmo") or item:Get("MaxBullets") or item:Get("MagazineSize")
+		if type(maxAmmo) ~= "number" or maxAmmo <= 0 then maxAmmo = 30 end
+		local cur = item:Get("CurrentAmmo") or item:Get("Ammo") or item:Get("Bullets")
+		if type(cur) == "number" and cur <= 0 then
+			if item.Set then
+				item:Set("CurrentAmmo", maxAmmo)
+				item:Set("Ammo", maxAmmo)
+				item:Set("Reloading", false)
+				item:Set("IsReloading", false)
+			end
+		elseif type(cur) == "number" and cur < maxAmmo then
+			if item.Set then
+				item:Set("CurrentAmmo", maxAmmo)
+				item:Set("Ammo", maxAmmo)
+			end
+		end
+		if item.Info and type(item.Info) == "table" then
+			if type(item.Info.MaxAmmo) == "number" then
+				item.Info.Ammo = item.Info.MaxAmmo
+				item.Info.CurrentAmmo = item.Info.MaxAmmo
+			end
+			item.Info.Reloading = false
+		end
+	end)
+end)
+
+-- Desync: client visual stay, server root briefly offset (csync style)
+local desyncVis = nil
+RunService.Heartbeat:Connect(function()
+	if not S.Desync then
+		return
+	end
+	pcall(function()
+		local char = LP.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		-- store visual CF
+		local visual = hrp.CFrame
+		-- push server replication down (void) then restore next render
+		local voidCF = visual - Vector3.new(0, 80, 0)
+		hrp.CFrame = voidCF
+		RunService.RenderStepped:Wait()
+		if hrp and hrp.Parent then
+			hrp.CFrame = visual
+		end
+	end)
+end)
+
+-- Wallbang/Ragebot2 removed
+
+-- Hit Notify
+local lastHP = {}
+RunService.Heartbeat:Connect(function()
+	if not S.HitNotify then return end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LP and plr.Character then
+			local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				local id = plr.UserId
+				local hp = hum.Health
+				local prev = lastHP[id]
+				if prev and hp < prev - 0.5 then
+					local dmg = math.floor(prev - hp + 0.5)
+					if hp <= 0 then
+						notify("Kill  " .. (plr.DisplayName or plr.Name))
+					else
+						notify(string.format("-%d  %s", dmg, plr.DisplayName or plr.Name))
+					end
+				end
+				lastHP[id] = hp
+			end
+		end
+	end
+end)
+
+-- Anti Flash / Smoke
+task.spawn(function()
+	while true do
+		task.wait(0.25)
+		if S.AntiFlash or S.AntiSmoke then
+			pcall(function()
+				local pg = LP:FindFirstChild("PlayerGui")
+				if pg then
+					for _, o in ipairs(pg:GetDescendants()) do
+						local n = string.lower(o.Name)
+						if S.AntiFlash and (string.find(n, "flash") or string.find(n, "blind")) then
+							if o:IsA("GuiObject") then o.Visible = false end
+							if o:IsA("ImageLabel") then o.ImageTransparency = 1 end
+						end
+						if S.AntiSmoke and string.find(n, "smoke") then
+							if o:IsA("GuiObject") then o.Visible = false end
+						end
+					end
+				end
+				if S.AntiFlash then
+					local l = game:GetService("Lighting")
+					for _, c in ipairs(l:GetChildren()) do
+						local n = string.lower(c.Name)
+						if string.find(n, "flash") or string.find(n, "blind") then
+							c:Destroy()
+						end
+					end
+				end
+				if S.AntiSmoke then
+					for _, o in ipairs(Workspace:GetDescendants()) do
+						if o:IsA("Smoke") then o.Enabled = false end
+					end
+				end
+			end)
+		end
+	end
+end)
+
+-- Crosshair
+task.spawn(function()
+	local pg = LP:WaitForChild("PlayerGui", 15)
+	if not pg then return end
+	local sg = Instance.new("ScreenGui")
+	sg.Name = "HubCrosshair"
+	sg.ResetOnSpawn = false
+	sg.IgnoreGuiInset = true
+	sg.DisplayOrder = 50
+	sg.Parent = pg
+	local function line(sz, pos)
+		local f = Instance.new("Frame")
+		f.Size = sz
+		f.Position = pos
+		f.AnchorPoint = Vector2.new(0.5, 0.5)
+		f.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
+		f.BorderSizePixel = 0
+		f.Parent = sg
+		return f
+	end
+	local h = line(UDim2.fromOffset(14, 2), UDim2.fromScale(0.5, 0.5))
+	local v = line(UDim2.fromOffset(2, 14), UDim2.fromScale(0.5, 0.5))
+	local d = line(UDim2.fromOffset(3, 3), UDim2.fromScale(0.5, 0.5))
+	RunService.RenderStepped:Connect(function()
+		local on = S.CustomCrosshair == true
+		h.Visible = on
+		v.Visible = on
+		d.Visible = on
+	end)
+end)
+
+-- Spectators
+task.spawn(function()
+	local pg = LP:WaitForChild("PlayerGui", 15)
+	if not pg then return end
+	local sg = Instance.new("ScreenGui")
+	sg.Name = "HubSpecs"
+	sg.ResetOnSpawn = false
+	sg.IgnoreGuiInset = true
+	sg.DisplayOrder = 40
+	sg.Parent = pg
+	local lab = Instance.new("TextLabel")
+	lab.Size = UDim2.new(0, 200, 0, 90)
+	lab.Position = UDim2.new(1, -210, 0, 80)
+	lab.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+	lab.BackgroundTransparency = 0.25
+	lab.BorderSizePixel = 1
+	lab.BorderColor3 = Color3.fromRGB(140, 100, 255)
+	lab.TextColor3 = Color3.fromRGB(230, 230, 240)
+	lab.Font = Enum.Font.Code
+	lab.TextSize = 12
+	lab.TextXAlignment = Enum.TextXAlignment.Left
+	lab.TextYAlignment = Enum.TextYAlignment.Top
+	lab.Visible = false
+	lab.Parent = sg
+	while true do
+		task.wait(0.6)
+		if not S.ShowSpectators then
+			lab.Visible = false
+		else
+			local specs = {}
+			for _, plr in ipairs(Players:GetPlayers()) do
+				if plr ~= LP then
+					local mark = false
+					pcall(function()
+						local st = plr:GetAttribute("SpectateTarget") or plr:GetAttribute("Spectating")
+						if tostring(st) == LP.Name or st == LP.UserId then mark = true end
+					end)
+					local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+					if not plr.Character or (hum and hum.Health <= 0) then
+						table.insert(specs, (plr.DisplayName or plr.Name) .. " (dead)")
+					elseif mark then
+						table.insert(specs, plr.DisplayName or plr.Name)
+					end
+				end
+			end
+			lab.Visible = true
+			lab.Text = #specs == 0 and " Spectators:\n  (none)" or (" Spectators:\n  " .. table.concat(specs, "\n  "))
+		end
+	end
+end)
+
+function doServerHop()
+	notify("Server hopping...")
+	pcall(function()
+		local HttpService = game:GetService("HttpService")
+		local TeleportService = game:GetService("TeleportService")
+		local placeId = game.PlaceId
+		local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+		local body
+		pcall(function()
+			if game.HttpGet then body = game:HttpGet(url) end
+		end)
+		if not body then
+			TeleportService:Teleport(placeId, LP)
+			return
+		end
+		local data = HttpService:JSONDecode(body)
+		local job = game.JobId
+		for _, s in ipairs((data and data.data) or {}) do
+			if s.id ~= job and (s.playing or 0) > 0 and (s.playing or 0) < (s.maxPlayers or 99) then
+				TeleportService:TeleportToPlaceInstance(placeId, s.id, LP)
+				return
+			end
+		end
+		TeleportService:Teleport(placeId, LP)
+	end)
+end
+
+
+print("[hub] clean rebuild loaded")
+
+	end)
+	print(ok and "[hub] features OK" or ("[hub] features FAIL: " .. tostring(err)))
+end)
